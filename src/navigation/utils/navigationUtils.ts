@@ -7,7 +7,7 @@ import {RootNavigatorParamList} from '../typings';
 export const navigationRef =
   createNavigationContainerRef<RootNavigatorParamList>();
 
-export function navigate(k
+export function navigate(
   name: keyof RootNavigatorParamList,
   params?: RootNavigatorParamList[keyof RootNavigatorParamList],
 ) {

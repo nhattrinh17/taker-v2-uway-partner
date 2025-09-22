@@ -11,9 +11,12 @@ buildscript {
         google()
         mavenCentral()
     }
+    configurations.all {
+        exclude group:"io.agora.rtc", module:"full-screen-sharing"
+    }
     dependencies {
-        classpath("com.android.tools.build:gradle:8.0.0")
-        // classpath("com.android.tools.build:gradle")
+        classpath("com.android.tools.build:gradle:8.0.2")
+        //classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
     }

@@ -1,1 +1,2 @@
-// Export all assets
+export * from './icons';
+export * from './Fonts';
