@@ -45,7 +45,7 @@ class SocketService {
     if (!SocketService.instance?.token) {
       console.log('🚀 ~ SocketService ~ getInstance ~ SocketService.instance:', SocketService.instance);
       SocketService.instance = new SocketService(token ?? '');
-      console.log('🚀 ~Mowr keets noois');
+      console.log('🚀 ~Mở kết nối');
     }
     return SocketService.instance;
   }

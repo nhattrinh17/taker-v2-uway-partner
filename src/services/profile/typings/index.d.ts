@@ -41,7 +41,7 @@ interface PartnerProfile {
   bankAccountNumber: string;
   bankAccountName: string;
   avatar: string;
-  activeSince: string; // ISO format date string
+  activeSince: number; // ISO format date string
   type: string;
 }
 

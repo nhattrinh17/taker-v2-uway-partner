@@ -1,8 +1,8 @@
 export const REVERSE_GEOCODE_URL = 'https://rsapi.goong.io/geocode?';
 export const GOONG_API_KEY = 'y7xzeUojQOKfRtKh5Q9tw0gtkzrPO1qm25zuVYj5';
 
-// export const BASE_URL = 'http://192.168.1.9:3003';
-// export const SOCKET_URL = 'http://192.168.1.9:8089';
+// export const BASE_URL = 'http://192.168.1.22:3003';
+// export const SOCKET_URL = 'http://192.168.1.22:8089';
 
 
 export const MAPTILES_KEY = 'IconiBpXjaG6bZgabX2MoAi4vyDAfxqmbi42afzF';

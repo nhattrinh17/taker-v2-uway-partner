@@ -58,13 +58,13 @@ const Login = () => {
   };
 
   useFocusEffect(
-  useCallback(() => {
-    // reset lỗi mỗi lần Login focus
-    setError('');
-    setPhoneError('');
-    setPasswordError('');
-  }, [])
-);
+    useCallback(() => {
+      // reset lỗi mỗi lần Login focus
+      setError('');
+      setPhoneError('');
+      setPasswordError('');
+    }, [])
+  );
 
   // const signInWithGoogle = async () => {
   //   try {
@@ -142,7 +142,7 @@ const Login = () => {
         case 'phone_or_password_wrong': setError('Sai số điện thoại hoặc mật khẩu'); break;
         case '{"message":"phone_already_exists_or_not_match","step":"COMPLETED","status":"BLOCKED"}':
           setError('Tài khoản đã bị khoá, vui lòng liên hệ admin'); break;
-          case '{"message":"phone_already_exists_or_not_match","step":"REGISTER_INFO_SUCCESS","status":"PENDING"}':
+        case '{"message":"phone_already_exists_or_not_match","step":"REGISTER_INFO_SUCCESS","status":"PENDING"}':
           setError('Vui lòng đăng ký và hoàn thành bước xác thực OTP'); break;
         default: setError('Đăng nhập thất bại');
       }
@@ -152,18 +152,18 @@ const Login = () => {
   };
 
   useEffect(() => {
-  (async () => {
-    const savedRemember = await AsyncStorage.getItem('rememberLogin');
-    if (savedRemember !== null) setRemember(JSON.parse(savedRemember));
+    (async () => {
+      const savedRemember = await AsyncStorage.getItem('rememberLogin');
+      if (savedRemember !== null) setRemember(JSON.parse(savedRemember));
 
-    if (JSON.parse(savedRemember ?? 'false')) {
-      const savedPhone = await AsyncStorage.getItem('savedPhone');
-      const savedPassword = await AsyncStorage.getItem('savedPassword');
-      if (savedPhone) setPhoneNumber(savedPhone);
-      if (savedPassword) setPassword(savedPassword);
-    }
-  })();
-}, []);
+      if (JSON.parse(savedRemember ?? 'false')) {
+        const savedPhone = await AsyncStorage.getItem('savedPhone');
+        const savedPassword = await AsyncStorage.getItem('savedPassword');
+        if (savedPhone) setPhoneNumber(savedPhone);
+        if (savedPassword) setPassword(savedPassword);
+      }
+    })();
+  }, []);
 
   const toggleRemember = async () => {
     const newVal = !remember;

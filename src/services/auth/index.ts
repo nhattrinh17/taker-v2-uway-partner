@@ -28,11 +28,11 @@ export const useSignUp = () => {
 // Lấy OTP (gọn giống verify)
 // Lấy OTP
 export const useOtp = () => {
-  const { trigger, error } = useSWRMutation<any, auth.Error, string, { id: string; type: string }>(
+  const { trigger, error } = useSWRMutation<any, auth.Error, string, { phone: string; type: string }>(
     `${Endpoint.Auth.OTP}`, // ví dụ: "v1/auth/otp"
     (url: string, { arg }) => {
       // type trước, rồi tới id (số điện thoại)
-      const path = `${url}/${encodeURIComponent(arg.type)}/${encodeURIComponent(arg.id)}`;
+      const path = `${url}/${encodeURIComponent(arg.type)}/${encodeURIComponent(arg.phone)}`;
       console.log('[useOtp] POST:', path, '| arg:', arg);
       return fetcher(path, Methods.PATCH, arg);
     }

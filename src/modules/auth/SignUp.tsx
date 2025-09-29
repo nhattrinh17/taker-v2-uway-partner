@@ -163,8 +163,10 @@ const SignUp = () => {
         referralCode,
         typeService,
         checked,
+        type: 'existed',
       });
     } catch (err: any) {
+      console.log(err);
       const raw = err?.data?.message;
       try {
         const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;

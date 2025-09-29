@@ -104,6 +104,7 @@ import Procedure from './Procedure.svg';
 import QrForeground from './QrForeground.svg';
 import QrBackground from './QrBackground.svg';
 import DateTime from './DateTime.svg';
+import Calendar from './Calendar.svg';
 
 export const Icons = {
     All,
@@ -155,5 +156,5 @@ export const Icons = {
     AcceptActive, BookedActive, CleanProgress, CleanProgressActive, Delivery, DeliveryActive,
     Package, PackageActive, PartnerAccept, PartnerAcceptActive,
     SuccessOrder, SuccessOrderActive, SuccessIcon, Date, Camera1, Star, Procedure, 
-    QrBackground, QrForeground, DateTime, 
+    QrBackground, QrForeground, DateTime, Calendar, 
 }

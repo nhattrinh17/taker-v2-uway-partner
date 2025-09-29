@@ -64,9 +64,9 @@ const handleSelect = (bank: any) => {
           value={searchTerm}
           onChangeText={setSearchTerm}
         />
-        <TouchableOpacity style={styles.clearButton} onPress={handleClearSelection}>
+        {/* <TouchableOpacity style={styles.clearButton} onPress={handleClearSelection}>
           <Text style={styles.clearButtonText}>Xóa lựa chọn</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <FlatList
           data={filteredBanks}
           keyExtractor={item => item.id.toString()}

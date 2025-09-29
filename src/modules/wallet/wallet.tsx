@@ -5,6 +5,7 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -23,6 +24,7 @@ import FancyWaveLoading from '../../components/FancyWaveLoading';
 import { goBack, navigate } from '../../navigation/utils/navigationUtils';
 import { Icons } from '../../assets';
 import ModalOrderSearch from '../../components/ModalOrderSearch';
+import { scale } from '../../ultils';
 
 interface Transaction {
   id: string;
@@ -43,18 +45,15 @@ const TransactionItem = ({ item, isLastItem }: { item: Transaction; isLastItem: 
       onPress={() => navigation.navigate('TransactionDetail', { item })}
       activeOpacity={0.8}
     >
+      <View style={styles.transactionIconContainer}>
+        {isDeposit ? <Icons.Deposit /> : <Icons.Withdraw />}
+      </View>
       <View style={styles.rowLeft}>
         <View style={styles.rowLeftHeader}>
-          {/* Icon theo loại giao dịch */}
-          {isDeposit ? (
-            <Icons.Deposit width={18} height={18} style={styles.typeIcon} />
-          ) : (
-            <Icons.Withdraw width={18} height={18} style={styles.typeIcon} />
-          )}
           <CommonText text={truncateString(item.description)} styles={styles.titleItem} />
         </View>
         <CommonText
-          text={`${extractTime(item.transactionDate)}, ${convertToDate(item.transactionDate)}`}
+          text={new Date(item.transactionDate).toLocaleString('vi-VN')}
           styles={styles.dateItem}
         />
       </View>
@@ -64,7 +63,10 @@ const TransactionItem = ({ item, isLastItem }: { item: Transaction; isLastItem: 
           text={`${isDeposit ? '+' : '-'}${formatCurrency(item.amount)} đ`}
           styles={[styles.amountItem, isDeposit ? styles.amountPos : styles.amountNeg]}
         />
-        <CommonText text={TRANSACTION_STATUS(item.status)} styles={[styles.statusItem, { color: TRANSACTION_STATUS_COLOR(item.status) }]} />
+        <CommonText
+          text={TRANSACTION_STATUS(item.status)}
+          styles={[styles.statusItem, { color: TRANSACTION_STATUS_COLOR(item.status) }]}
+        />
       </View>
     </TouchableOpacity>
   );
@@ -80,8 +82,6 @@ const Wallet = () => {
   const [total, setTotal] = useState(1);
   const [loadingList, setLoadingList] = useState(false);
   const [error, setError] = useState('');
-
-  // refs to avoid concurrent/duplicate fetches
   const isFetchingRef = useRef(false);
   const lastFetchPageRef = useRef<number | null>(null);
   const lastFetchAtRef = useRef<number | null>(null);
@@ -92,6 +92,7 @@ const Wallet = () => {
     startDate?: string;
     endDate?: string;
   }>({});
+
   const getBalance = async () => {
     try {
       const res = await triggerGetWalletBalance();
@@ -167,14 +168,13 @@ const Wallet = () => {
     fromDate,
     toDate,
   }: { status?: string; fromDate?: string; toDate?: string }) => {
-    // map sang tên field API cần
     setFilters({
       status,
       startDate: fromDate,
       endDate: toDate,
     });
-    setPage(1);                 // reset về trang 1
-    setTransactions([]);        // xoá list cũ
+    setPage(1);
+    setTransactions([]);
     getHistoryTransaction(1, {
       status,
       startDate: fromDate,
@@ -199,7 +199,6 @@ const Wallet = () => {
   }, [page]);
 
   const handleLoadMore = () => {
-    // ensure not currently loading and still has more data
     if (!loadingList && !isFetchingRef.current && total > transactions.length) {
       setPage(prev => prev + 1);
     }
@@ -216,13 +215,21 @@ const Wallet = () => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => setIsSearchModalVisible(true)} style={styles.headerIcon} activeOpacity={0.8}>
-          {Icons.Moreoptions ? <Icons.Moreoptions /> : <Text>{'<'} </Text>}
+        <TouchableOpacity
+          onPress={() => setIsSearchModalVisible(true)}
+          style={styles.headerIcon}
+          activeOpacity={0.8}
+        >
+          {Icons.Moreoptions ? <Icons.Moreoptions width={scale(20)} height={scale(20)} /> : <Text>{'<'} </Text>}
         </TouchableOpacity>
 
         <Text style={styles.headerTitle}>Tài khoản</Text>
 
-        <TouchableOpacity onPress={() => navigate('InCome')} style={styles.headerRight} activeOpacity={0.8}>
+        <TouchableOpacity
+          onPress={() => navigate('InCome')}
+          style={styles.headerRight}
+          activeOpacity={0.8}
+        >
           <Text style={styles.headerAction}>Thu nhập</Text>
         </TouchableOpacity>
       </View>
@@ -248,7 +255,7 @@ const Wallet = () => {
           {/* Cột phải */}
           <Text
             style={styles.username}
-            numberOfLines={1} // tránh tràn
+            numberOfLines={1}
             ellipsizeMode="tail"
           >
             {(user?.name || 'USER').toUpperCase()}
@@ -258,7 +265,7 @@ const Wallet = () => {
         {/* Hàng dưới: 2 nút */}
         <View style={styles.actionRow}>
           <TouchableOpacity
-            style={[styles.actionBtn, { marginRight: 8 }]}
+            style={[styles.actionBtn, { marginRight: scale(8) }]}
             onPress={() => navigate('Deposit')}
             activeOpacity={0.85}
           >
@@ -267,7 +274,7 @@ const Wallet = () => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.actionBtn, { marginLeft: 8 }]}
+            style={[styles.actionBtn, { marginLeft: scale(8) }]}
             onPress={() => navigate('WithDraw')}
             activeOpacity={0.85}
           >
@@ -276,7 +283,6 @@ const Wallet = () => {
           </TouchableOpacity>
         </View>
       </ImageBackground>
-
 
       {/* Error */}
       {!!error && <Text style={styles.errorText}>{error}</Text>}
@@ -291,11 +297,10 @@ const Wallet = () => {
           <TransactionItem item={item} isLastItem={index === transactions.length - 1} />
         )}
         ListEmptyComponent={renderEmpty()}
-        ListFooterComponent={loadingList ? <FancyWaveLoading /> : null}
         onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.4}
+        onEndReachedThreshold={0.5}
         contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={true}
         refreshing={refreshing}
         onRefresh={onRefresh}
       />
@@ -310,7 +315,6 @@ const Wallet = () => {
   );
 };
 
-// ... styles unchanged (copy from your original)
 const styles = StyleSheet.create({
   // Layout
   container: { flex: 1, backgroundColor: Colors.background },
@@ -319,53 +323,53 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: scale(16),
+    paddingVertical: scale(10),
     backgroundColor: Colors.background,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#EDEDED',
   },
-  headerIcon: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+  headerIcon: { width: scale(40), height: scale(40), justifyContent: 'center', alignItems: 'center' },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 18,
+    fontSize: scale(18),
     color: Colors.black,
     fontFamily: Fonts.fontFamily?.LexendSemiBold,
   },
-  headerRight: { width: 70, alignItems: 'flex-end' },
+  headerRight: { width: scale(70), alignItems: 'flex-end' },
   headerAction: {
-    fontSize: 16,
+    fontSize: scale(16),
     color: Colors.blue,
     fontFamily: Fonts.fontFamily?.LexendSemiBold,
   },
 
   // Wallet card
   walletCard: {
-    margin: 16,
-    padding: 28,
+    margin: scale(16),
+    padding: scale(28),
     backgroundColor: Colors.blue,
-    borderRadius: 18,
-    height: 220,
+    borderRadius: scale(18),
+    height: scale(220),
   },
   walletBgImage: {
-    borderRadius: 16,          // bo góc ảnh nền
-    resizeMode: 'cover',       // hoặc 'stretch' tùy ý
+    borderRadius: scale(16),
+    resizeMode: 'cover',
   },
   actionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 50,
-    gap: 25,
+    marginTop: scale(50),
+    gap: scale(25),
   },
   actionBtn: {
-    flex: 1,                      // chia đều 2 nút
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.white,
-    paddingVertical: 10,
-    borderRadius: 22,
+    paddingVertical: scale(10),
+    borderRadius: scale(22),
   },
   walletTopRow: {
     flexDirection: 'row',
@@ -373,105 +377,104 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   labelWalletBox: {
-    fontSize: 14,
+    fontSize: scale(14),
     color: Colors.white,
     fontFamily: Fonts.fontFamily?.LexendRegular,
   },
-  balanceRow: { flexDirection: 'row', alignItems: 'flex-end', marginTop: 6 },
+  balanceRow: { flexDirection: 'row', alignItems: 'flex-end', marginTop: scale(6) },
   labelAmount: {
-    fontSize: 28,
+    fontSize: scale(28),
     color: Colors.white,
     fontFamily: Fonts.fontFamily?.LexendSemiBold,
   },
   balanceUnit: {
     color: Colors.white,
-    fontSize: 28,
+    fontSize: scale(28),
     marginLeft: 0,
     fontFamily: Fonts.fontFamily?.LexendRegular,
   },
-  btnDeposit: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 22,
-  },
   textBtn: {
     color: Colors.blue,
-    marginLeft: 6,
-    fontSize: 14,
+    marginLeft: scale(6),
+    fontSize: scale(14),
     fontFamily: Fonts.fontFamily?.LexendSemiBold,
   },
   username: {
     marginTop: 0,
     color: Colors.white,
-    fontSize: 24,
+    fontSize: scale(24),
     fontFamily: Fonts.fontFamily?.LexendSemiBold,
   },
 
   // Titles
   labelHistory: {
-    fontSize: 16,
+    fontSize: scale(18),
     fontFamily: Fonts.fontFamily?.LexendSemiBold,
     color: Colors.black,
-    marginHorizontal: 16,
-    marginTop: 6,
-    marginBottom: 8,
+    marginHorizontal: scale(16),
+    marginTop: scale(6),
+    marginBottom: scale(8),
+    fontWeight: 'bold',
   },
 
   // List
   listContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
+    paddingHorizontal: scale(16),
+    paddingBottom: scale(24),
   },
   rowItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingVertical: 12,
+    paddingVertical: scale(12),
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#EDEDED',
+  },
+  transactionIconContainer: {
+    width: scale(35),
+    height: scale(35),
+    borderRadius: scale(20),
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: scale(12),
+    backgroundColor: Colors.blue,
   },
   rowItemLast: {
     borderBottomWidth: 0,
   },
-  rowLeft: { flex: 1, paddingRight: 12 },
+  rowLeft: { flex: 1, paddingRight: scale(12) },
   rowLeftHeader: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  typeIcon: {
-    marginRight: 6, // khoảng cách giữa icon và chữ
-  },
   rowRight: { alignItems: 'flex-end' },
-
   titleItem: {
-    fontSize: 14,
+    fontSize: scale(14),
     color: Colors.black,
     fontFamily: Fonts.fontFamily?.LexendSemiBold,
   },
   dateItem: {
-    marginTop: 4,
-    fontSize: 12,
+    marginTop: scale(4),
+    fontSize: scale(12),
     color: Colors.gray,
     fontFamily: Fonts.fontFamily?.LexendRegular,
   },
   amountItem: {
-    fontSize: 14,
-    marginBottom: 4,
+    fontSize: scale(14),
+    marginBottom: scale(4),
     fontFamily: Fonts.fontFamily?.LexendSemiBold,
   },
   amountPos: { color: 'green' },
   amountNeg: { color: 'red' },
   statusItem: {
-    fontSize: 12,
+    fontSize: scale(12),
     fontFamily: Fonts.fontFamily?.LexendRegular,
+    textAlign: 'right'
   },
 
   // Empty & errors
-  wrapperEmpty: { alignItems: 'center', justifyContent: 'center', paddingVertical: 40 },
-  emptyLabel: { fontSize: 14, color: Colors.gray, marginTop: 10, textAlign: 'center' },
-  errorText: { color: Colors.red, textAlign: 'center', marginVertical: 10 },
+  wrapperEmpty: { alignItems: 'center', justifyContent: 'center', paddingVertical: scale(40) },
+  emptyLabel: { fontSize: scale(14), color: Colors.gray, marginTop: scale(10), textAlign: 'center' },
+  errorText: { color: Colors.red, textAlign: 'center', marginVertical: scale(10) },
 });
 
 export default Wallet;

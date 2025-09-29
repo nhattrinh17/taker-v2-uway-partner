@@ -20,13 +20,13 @@ import { showMessageError } from '../../ultils';
 import { isValidEmail, isValidPhone } from '../../ultils/validation';
 import { Colors } from '../../assets/Colors';
 import { Icons } from '../../assets';
-import DateSelection from '../../components/DateSelection';
 import Avatar from '../../components/Avatar';
 import { PartnerProfile, IOperatingHours, IDayOperatingHours } from '../../services/profile/typings';
 import DayOperatingRow from '../../components/DayOperatingRow';
 import CancelModal from '../../components/CancelModal';
 import SuccessModal from '../../components/SuccessModal';
 import { goBack } from '../../navigation/utils/navigationUtils';
+import InputRow from '../../components/InputRow';
 
 const defaultOperatingHours: IOperatingHours = {
   monday: null,
@@ -72,10 +72,8 @@ const Information = () => {
         const res = await triggerGetInfo();
         const data = res.data;
         if (data) {
-          // lấy operatingHours raw (có thể là string hoặc object)
+          // Xử lý operatingHours raw
           let rawHours: any = data.operatingHours ?? {};
-
-          // nếu server trả string JSON -> parse
           if (typeof rawHours === 'string') {
             try {
               rawHours = JSON.parse(rawHours);
@@ -85,28 +83,22 @@ const Information = () => {
             }
           }
 
-          // chuẩn hoá thành IOperatingHours
+          // Chuẩn hóa operatingHours
           const sanitizedOperatingHours: IOperatingHours = { ...defaultOperatingHours };
-
           validDays.forEach(day => {
             const v = rawHours?.[day];
-
             if (v == null) {
               sanitizedOperatingHours[day as keyof IOperatingHours] = null;
               return;
             }
-
-            // nếu value là chuỗi JSON nữa (edge-case)
             if (typeof v === 'string') {
               try {
                 const parsed = JSON.parse(v);
-                // parsed nên có {open, close}
                 sanitizedOperatingHours[day as keyof IOperatingHours] = {
                   open: parsed.open ?? null,
                   close: parsed.close ?? null,
                 } as IDayOperatingHours;
               } catch {
-                // fallback: nếu là "08:00-18:00" hoặc "08:00,18:00"
                 const parts = (v as string).split(/[^0-9:]+/).filter(Boolean);
                 if (parts.length >= 2) {
                   sanitizedOperatingHours[day as keyof IOperatingHours] = {
@@ -119,24 +111,40 @@ const Information = () => {
               }
               return;
             }
-
-            // nếu đã là object với open/close
             if (typeof v === 'object') {
               const open = (v.open ?? null) as string | null;
               const close = (v.close ?? null) as string | null;
               sanitizedOperatingHours[day as keyof IOperatingHours] = open || close ? { open, close } : null;
               return;
             }
-
-            // default fallback
             sanitizedOperatingHours[day as keyof IOperatingHours] = null;
           });
+
+          // Xử lý activeSince - chuyển từ timestamp thành năm (number)
+          let activeSinceYear: number | undefined = undefined;
+          if (data.activeSince) {
+            if (typeof data.activeSince === 'number') {
+              activeSinceYear = new Date(data.activeSince).getFullYear();
+            } else if (typeof data.activeSince === 'string') {
+              const parsed = parseInt(data.activeSince);
+              if (!isNaN(parsed)) {
+                // Nếu là năm (4 chữ số)
+                if (parsed >= 1990 && parsed <= new Date().getFullYear()) {
+                  activeSinceYear = parsed;
+                } else {
+                  // Nếu là timestamp
+                  activeSinceYear = new Date(parsed).getFullYear();
+                }
+              }
+            }
+          }
 
           const updatedData: PartnerProfile = {
             ...data,
             name: data.fullName || data.name || '',
             operatingHours: sanitizedOperatingHours,
             type: data.type ?? 'SHOE_CLEANING',
+            activeSince: activeSinceYear,
           };
 
           setFormData(updatedData);
@@ -153,47 +161,27 @@ const Information = () => {
     fetchData();
   }, [isFocused, setUser, triggerGetInfo]);
 
-
   const hasChanges = () => {
     if (!initialData || !formData) return false;
     return JSON.stringify(formData) !== JSON.stringify(initialData);
   };
 
-
   // 🔹 Update field text
   const handleInputChange = (field: keyof PartnerProfile, value: string) => {
-    setFormData((prev: any) => ({ ...prev, [field]: value }));
+    if (field === 'activeSince') {
+      // Chỉ cho phép nhập số và giới hạn 4 chữ số
+      const numericValue = value.replace(/\D/g, '');
+      if (numericValue.length <= 4) {
+        const yearNumber = numericValue ? parseInt(numericValue) : undefined;
+        setFormData((prev: any) => ({ ...prev, [field]: yearNumber }));
+      }
+    } else {
+      setFormData((prev: any) => ({ ...prev, [field]: value }));
+    }
+    
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
-  };
-
-  // 🔹 Chọn ngân hàng
-  const onSelectBank = (bank: { shortName: string; code: string } | null) => {
-    setFormData(prev => {
-      const current = prev.bankName;
-      const selected = bank ? `${bank.shortName} - ${bank.code}` : '';
-
-      // Nếu chọn lại đúng ngân hàng đang được chọn => xoá
-      const newBankName = current === selected ? '' : selected;
-
-      return {
-        ...prev,
-        bankName: newBankName,
-      };
-    });
-    setShowBankModal(false);
-  };
-
-
-  const clearBank = () => {
-    setFormData(prev => ({
-      ...prev,
-      bankName: '',
-      bankAccountName: '',
-      bankAccountNumber: '',
-    }));
-    setErrors(prev => ({ ...prev, bank: '' }));
   };
 
   // 🔹 Gửi API update
@@ -216,6 +204,35 @@ const Information = () => {
       newErrors.email = 'Email không đúng định dạng';
       isValid = false;
     }
+
+    // Validate activeSince (năm) - phải từ 1990 đến năm hiện tại
+    if (!formData.activeSince) {
+      newErrors.activeSince = 'Năm hoạt động không được để trống';
+      isValid = false;
+    } else {
+      const currentYear = new Date().getFullYear();
+      if (
+        typeof formData.activeSince !== 'number' ||
+        isNaN(formData.activeSince) ||
+        formData.activeSince < 1990 ||
+        formData.activeSince > currentYear
+      ) {
+        newErrors.activeSince = `Năm hoạt động phải từ 1990 đến ${currentYear}`;
+        isValid = false;
+      }
+    }
+
+    // Validate operating hours - kiểm tra tất cả các ngày
+    const hasInvalidOperatingHours = validDays.some(day => {
+      const dayHours = formData.operatingHours?.[day];
+      return !dayHours || !dayHours.open || !dayHours.close;
+    });
+
+    if (hasInvalidOperatingHours) {
+      newErrors.operatingHours = 'Vui lòng nhập đầy đủ giờ mở cửa và đóng cửa';
+      isValid = false;
+    }
+
     const hasAnyBankField = formData.bankName || formData.bankAccountName || formData.bankAccountNumber;
     if (hasAnyBankField && (!formData.bankName || !formData.bankAccountName?.trim() || !formData.bankAccountNumber?.trim())) {
       newErrors.bank = 'Vui lòng điền đầy đủ thông tin ngân hàng';
@@ -231,7 +248,7 @@ const Information = () => {
       name: formData.name ?? '',
       email: formData.email,
       phone: formData.phone,
-      activeSince: formData.activeSince ? new Date(formData.activeSince).toISOString() : undefined,
+      activeSince: formData.activeSince ? new Date(formData.activeSince, 0, 1).getTime() : undefined,
       bankName: formData.bankName,
       bankAccountNumber: formData.bankAccountNumber,
       bankAccountName: formData.bankAccountName,
@@ -241,9 +258,11 @@ const Information = () => {
     };
 
     try {
+      console.log('==>', payload);
       await triggerUpdateInfo(payload);
       setShowSuccessModal(true);
     } catch (error: any) {
+      console.log('==>', error);
       showMessageError(error);
     } finally {
       setIsLoading(false);
@@ -263,13 +282,16 @@ const Information = () => {
       <StatusBar barStyle="dark-content" />
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => {
-          if (hasChanges()) {
-            setShowConfirmModal(true);
-          } else {
-            navigation.goBack();
-          }
-        }} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => {
+            if (hasChanges()) {
+              setShowConfirmModal(true);
+            } else {
+              navigation.goBack();
+            }
+          }}
+          style={styles.backButton}
+        >
           <Icons.BackbuttonProfile width={45} height={45} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Thông tin cá nhân</Text>
@@ -278,7 +300,6 @@ const Information = () => {
 
       {/* Content */}
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-
         <View style={styles.avatarContainer}>
           <Avatar />
         </View>
@@ -308,8 +329,16 @@ const Information = () => {
           error={errors.email}
           icon={<Icons.Email width={20} height={20} />}
         />
-
-        <DateSelection defaultDate={formData.activeSince} onDateChange={date => handleInputChange('activeSince', date)} />
+        <InputRow
+          label="Năm hoạt động"
+          value={formData.activeSince?.toString() || ''}
+          onChangeText={text => handleInputChange('activeSince', text)}
+          error={errors.activeSince}
+          icon={<Icons.DateTime width={20} height={20} />}
+          keyboardType="numeric"
+          maxLength={4}
+          placeholder="VD: 2023"
+        />
 
         {/* Bank */}
         <Text style={styles.sectionTitle}>Ngân hàng</Text>
@@ -333,13 +362,11 @@ const Information = () => {
           value={formData.bankAccountName}
           onFocus={() => setIsFocus(true)}
           onBlur={() => setIsFocus(false)}
-          onChangeText={text =>
-            handleInputChange('bankAccountName', text.toUpperCase())
-          }
+          onChangeText={text => handleInputChange('bankAccountName', text.toUpperCase())}
           icon={<Icons.Name width={20} height={20} />}
         />
 
-        {isFocused && !!formData.bankAccountName && (
+        {isFocus && !!formData.bankAccountName && (
           <Text style={{ marginTop: 6, fontSize: 12, color: 'red' }}>
             *Thông tin tài khoản ngân hàng được cung cấp do khách hàng chịu trách nhiệm
           </Text>
@@ -364,23 +391,22 @@ const Information = () => {
             }
           />
         ))}
-
+        {errors.operatingHours && <Text style={styles.errorText}>{errors.operatingHours}</Text>}
 
         {/* Update button */}
         <TouchableOpacity
           style={styles.updateButton}
-          onPress={() => setShowUpdateConfirm(true)}   // mở modal xác nhận
+          onPress={() => setShowUpdateConfirm(true)}
         >
           <Text style={styles.updateButtonText}>Cập nhật</Text>
         </TouchableOpacity>
-
       </ScrollView>
 
       {/* Modals */}
       <BankSelectionModal
         isVisible={showBankModal}
         onClose={() => setShowBankModal(false)}
-        selectedBankName={formData.bankName}   // ✅ chỉ truyền tên
+        selectedBankName={formData.bankName}
         onSelectBank={bank => {
           setFormData(prev => ({ ...prev, bankName: bank ? bank.name : '' }));
         }}
@@ -395,7 +421,6 @@ const Information = () => {
         message="Thông tin chưa được lưu"
         textBtn="Tiếp tục"
       />
-
       <CancelModal
         visible={showUpdateConfirm}
         onClose={() => setShowUpdateConfirm(false)}
@@ -406,64 +431,18 @@ const Information = () => {
         message="Bạn có chắc chắn muốn cập nhật thông tin?"
         textBtn="Xác nhận"
       />
-
-
       <SuccessModal
         visible={showSuccessModal}
-        title='Thành công'
-        message='Cập nhật thông tin thành công'
+        title="Thành công"
+        message="Cập nhật thông tin thành công"
         onClose={() => {
           setShowSuccessModal(false);
-          goBack(); // đóng luôn modal chọn chi nhánh
+          goBack();
         }}
       />
-
     </View>
   );
 };
-
-interface InputRowProps {
-  label: string;
-  value?: string | null;
-  onChangeText?: (text: string) => void;
-  onFocus?: () => void;
-  onBlur?: () => void;
-  editable?: boolean;
-  keyboardType?: 'default' | 'numeric' | 'email-address' | 'phone-pad';
-  error?: string;
-  icon?: React.ReactNode;
-  maxLength?: number;
-}
-
-const InputRow: React.FC<InputRowProps> = ({
-  label,
-  value,
-  onChangeText,
-  editable = true,
-  onFocus,
-  onBlur,
-  keyboardType = 'default',
-  maxLength,
-  error = '',
-  icon,
-}) => (
-  <View style={styles.inputContainer}>
-    <Text style={styles.label}>{label}</Text>
-    <View style={[styles.inputBox, error ? { borderColor: 'red' } : {}]}>
-      {icon && <View style={styles.inputIconContainer}>{icon}</View>}
-      <TextInput
-        style={styles.input}
-        value={value || ''}
-        onChangeText={onChangeText}
-        editable={editable}
-        keyboardType={keyboardType}
-        maxLength={maxLength}
-        placeholderTextColor="#8E8E93"
-      />
-    </View>
-    {error && <Text style={styles.errorText}>{error}</Text>}
-  </View>
-);
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },

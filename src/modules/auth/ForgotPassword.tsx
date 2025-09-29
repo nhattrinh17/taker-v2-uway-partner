@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, Image, ScrollView, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, Image, ScrollView, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Images } from '../../assets/Images';
@@ -10,7 +10,7 @@ import { isValidVietnamesePhone } from '../../ultils/validation';
 import { useForgotPassword } from '../../services/auth';
 import { appStore } from '../../states/app';
 import { navigationRef } from '../../navigation/utils/navigationUtils';
-import { goBack, navigate, replace } from '../../navigation/utils/navigationUtils'
+import { goBack, navigate, replace } from '../../navigation/utils/navigationUtils';
 import { Screen } from 'react-native-screens';
 
 const ForgotPassword = () => {
@@ -20,13 +20,15 @@ const ForgotPassword = () => {
   const { setLoading } = appStore(state => state);
   const { triggerForgotPassword } = useForgotPassword();
 
-  // THAY ĐỔI: useEffect mới để kiểm tra SĐT theo thời gian thực
+  // Real-time phone number validation
   useEffect(() => {
     if (phoneNumber.length > 0) {
       if (!isValidVietnamesePhone(phoneNumber)) {
         setPhoneError('Số điện thoại không hợp lệ');
+        setError(''); // Clear server-side error when phone number changes
       } else {
         setPhoneError('');
+        setError(''); // Clear server-side error when phone number is valid
       }
     } else {
       setPhoneError('');
@@ -36,7 +38,7 @@ const ForgotPassword = () => {
 
   const handleForgotPassword = async () => {
     setError('');
-    setPhoneError('');
+    setPhoneError(''); // Clear phoneError to prevent duplicate error messages
 
     if (!isValidVietnamesePhone(phoneNumber)) {
       setPhoneError('Số điện thoại không hợp lệ');
@@ -48,7 +50,7 @@ const ForgotPassword = () => {
       console.log('reponse', res)
       if (res.type === 'success') {
         setLoading(false);
-        navigationRef.navigate('Otp', { phoneNumber: phoneNumber, type: 'forgot' });
+        navigationRef.navigate('Otp', { phoneNumber: phoneNumber, type: 'existed' });
       } else {
         setLoading(false);
       }
@@ -63,11 +65,11 @@ const ForgotPassword = () => {
           break;
         case 'otp_already_sent':
           setError('Mã OTP đã được gửi. Vui lòng kiểm tra tin nhắn.');
-          navigationRef.navigate('Otp', { phoneNumber: phoneNumber, type: 'forgot' });
+          navigationRef.navigate('Otp', { phoneNumber: phoneNumber, type: 'existed' });
           break;
         case '{"message":"step_invalid","step":"OTP"}':
-            setError('');
-            navigationRef.navigate('Otp', { phoneNumber, type: 'forgot' });
+          setError('');
+          navigationRef.navigate('Otp', { phoneNumber, type: 'existed' });
           break;
         case 'otp_limit_exceeded':
           setError('Bạn đã gửi yêu cầu OTP quá nhiều lần.');
@@ -90,7 +92,7 @@ const ForgotPassword = () => {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <SafeAreaView style={[sx.wrap, styles.container]}>
             <View style={styles.header}>
-              <TouchableOpacity onPress={() => replace( 'Login')} style={styles.backButton}>
+              <TouchableOpacity onPress={() => replace('Login')} style={styles.backButton}>
                 {Icons.BackbuttonProfile ? (
                   <Icons.BackbuttonProfile width={45} height={45} />
                 ) : (
@@ -163,11 +165,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    paddingHorizontal: 5,
     marginBottom: 10,
   },
-  backButton: {
-  },
+  backButton: {marginTop: 30 },
   form: { marginTop: 3 },
   backButtonText: {
     fontSize: 30,

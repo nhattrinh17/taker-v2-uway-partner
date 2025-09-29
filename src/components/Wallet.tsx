@@ -4,19 +4,17 @@ import { Fonts, Icons } from '../assets';
 import { formatCurrency } from '../ultils';
 import { navigate } from '../navigation/utils/navigationUtils';
 import { Colors } from '../assets/Colors';
-const { width } = Dimensions.get('window');
-
-const scale = (size: number) => (width / 375) * size;
+import { scale } from '../ultils';
 
 interface WalletHeaderProps {
   balance: number;
   average: number;
 }
 const WalletHeader: React.FC<WalletHeaderProps> = ({ balance, average }) => {
- 
+
   return (
     <View style={styles.card}>
-     <TouchableOpacity
+      <TouchableOpacity
         style={styles.walletSection}
         onPress={() => navigate('WalletStack', { screen: 'Wallet' })}
         activeOpacity={0.8}
@@ -24,7 +22,7 @@ const WalletHeader: React.FC<WalletHeaderProps> = ({ balance, average }) => {
         <Icons.WalletTabActive width={35} height={35} />
         <View style={{ marginLeft: 8 }}>
           <Text style={styles.textTitle}>Số dư ví</Text>
-          <Text style={styles.textContent}>
+          <Text style={styles.textContent} >
             {formatCurrency(!balance ? '0' : balance.toString())}đ
           </Text>
         </View>
@@ -35,9 +33,9 @@ const WalletHeader: React.FC<WalletHeaderProps> = ({ balance, average }) => {
             <Icons.StarActive width={35} height={35} />
           </View>
           <View>
-              <Text style={styles.infoLabel}>Điểm đánh giá</Text>
-              <Text style={styles.infoValue}> {average.toFixed(1)}/5</Text>
-            </View>
+            <Text style={styles.infoLabel}>Điểm đánh giá</Text>
+            <Text style={styles.infoValue}> {average.toFixed(1)}/5</Text>
+          </View>
         </View>
       </TouchableOpacity>
     </View>
@@ -51,35 +49,24 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     marginHorizontal: 20,
     borderRadius: 18,
-    paddingHorizontal: 10,
+    paddingHorizontal: 24,   // ⬅️ lùi 2 bên vào
     paddingVertical: 20,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around', // ⬅️ chia đều & tách khỏi lề
     alignItems: 'center',
     elevation: 10,
     transform: [{ translateY: 5 }],
-    gap: 16,
   },
   walletSection: {
+    flex: 1,
     flexDirection: 'row',
-    gap: 8,
-    width: '55%',
     alignItems: 'center',
-    paddingLeft: 15,
-  },
-  infoLabel: {
-    fontSize: scale(16),
-    color: 'black',
-    fontWeight: 'bold',
-  },
-  infoValue: {
-    fontSize: scale(16),
-    fontWeight: '600',
+    justifyContent: 'flex-start',
   },
   historyContainer: {
+    flex: 1,
+    gap: 5,
     flexDirection: 'row',
-    gap: 10,
-    width: '60%',
     alignItems: 'center',
     justifyContent: 'flex-end',
   },
@@ -94,5 +81,16 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.fontFamily.LexendRegular,
     color: Colors.black,
     lineHeight: 24,
+    flexShrink: 1,          // cho phép xuống dòng khi quá dài
+    flexWrap: 'wrap',       // ↓ cần cho xuống dòng
+  },
+  infoLabel: {
+    fontSize: scale(16),
+    color: 'black',
+    fontWeight: 'bold',
+  },
+  infoValue: {
+    fontSize: scale(16),
+    fontWeight: '600',
   },
 });

@@ -20,6 +20,7 @@ import { Icons } from '../../assets';
 import { Images } from '../../assets/Images';
 import { RootNavigatorParamList, Address } from '../../navigation/typings';
 import { useGetAddress, useDeleteAddress } from '../../services/address';
+import { scale } from '../../ultils';
 
 const LocationManage = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootNavigatorParamList>>();
@@ -76,11 +77,11 @@ const LocationManage = () => {
   const renderRightActions = (id: string) => (progress: any, dragX: any) => {
     const trans = dragX.interpolate({
       inputRange: [-100, 0],
-      outputRange: [0, 60],
+      outputRange: [0, scale(60)],
       extrapolate: 'clamp',
     });
 
-    const scale = progress.interpolate({
+    const scaleAnim = progress.interpolate({
       inputRange: [0, 1],
       outputRange: [0.9, 1],
       extrapolate: 'clamp',
@@ -98,7 +99,7 @@ const LocationManage = () => {
           style={[
             styles.deleteButton,
             {
-              transform: [{ translateX: trans }, { scale }],
+              transform: [{ translateX: trans }, { scale: scaleAnim }],
               opacity,
             },
           ]}
@@ -131,14 +132,14 @@ const LocationManage = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
-          <Icons.BackbuttonProfile width={45} height={45} />
+          <Icons.BackbuttonProfile width={scale(45)} height={scale(45)} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Chi nhánh cửa hàng</Text>
         <TouchableOpacity
           style={styles.headerButton}
           onPress={() => navigation.navigate('AddressForm', {})}
         >
-          <Icons.Addlocation width={24} height={24} color={Colors.primary} />
+          <Icons.Addlocation width={scale(24)} height={scale(24)} color={Colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -210,7 +211,7 @@ const AddressCard = ({ address, navigation }: AddressCardProps) => {
       style={[
         styles.card,
         {
-          borderWidth: address.isDefault ? 2 : 1,
+          borderWidth: address.isDefault ? scale(2) : scale(1),
           borderColor: address.isDefault ? Colors.blue : Colors.black,
         },
       ]}
@@ -222,17 +223,29 @@ const AddressCard = ({ address, navigation }: AddressCardProps) => {
       </View>
       <View style={styles.cardBody}>
         <View style={styles.addressTextContainer}>
-          <Icons.Locationdetail width={24} height={24} style={styles.locationIcon} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.cardLabel} numberOfLines={2}>{address.address}</Text>
-            <Text style={styles.cardAddress} numberOfLines={2} >{address.label || 'Không có địa chỉ chi tiết'}</Text>
+          <Icons.Locationdetail
+            width={scale(24)}
+            height={scale(24)}
+            style={styles.locationIcon}
+          />
+          <View style={styles.addressTextWrapper}>
+            <Text style={styles.cardLabel} numberOfLines={2}>
+              {address.address}
+            </Text>
+            <Text style={styles.cardAddress} numberOfLines={2}>
+              {address.label || 'Không có địa chỉ chi tiết'}
+            </Text>
           </View>
         </View>
         <TouchableOpacity
           style={styles.editButton}
           onPress={() => navigation.navigate('AddressForm', { address })}
         >
-          <Icons.Editlocation width={28} height={28} color={Colors.primary} />
+          <Icons.Editlocation
+            width={scale(28)}
+            height={scale(28)}
+            color={Colors.primary}
+          />
         </TouchableOpacity>
       </View>
     </View>
@@ -248,64 +261,65 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    height: 60,
+    paddingHorizontal: scale(16),
+    height: scale(60),
   },
   headerButton: {
-    width: 45,
-    height: 45,
+    width: scale(45),
+    height: scale(45),
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: scale(18),
     fontWeight: 'bold',
     color: Colors.textPrimary,
   },
   container: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 10,
+    paddingHorizontal: scale(16),
+    paddingTop: scale(10),
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: scale(16),
     fontWeight: '600',
     color: Colors.textPrimary,
-    marginBottom: 12,
+    marginBottom: scale(12),
   },
   listContainer: {
-    paddingBottom: 20,
+    paddingBottom: scale(20),
   },
   card: {
     backgroundColor: Colors.white,
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: scale(20),
+    padding: scale(20),
+    marginBottom: scale(16),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: scale(4) },
     shadowOpacity: 0.1,
-    shadowRadius: 12,
+    shadowRadius: scale(12),
     elevation: 5,
   },
   cardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
+    alignItems: 'flex-start', // Changed to prevent misalignment with long names
+    marginBottom: scale(12),
   },
   cardName: {
-    fontSize: 16,
+    fontSize: scale(16),
     fontWeight: 'bold',
     color: Colors.textPrimary,
     flex: 1,
+    lineHeight: scale(22), // Added for consistent text spacing
   },
   separator: {
-    width: 1,
-    height: 16,
+    width: scale(1),
+    height: scale(16),
     backgroundColor: Colors.border,
-    marginHorizontal: 12,
+    marginHorizontal: scale(12),
   },
   cardPhone: {
-    fontSize: 14,
+    fontSize: scale(14),
     color: Colors.black,
   },
   cardBody: {
@@ -316,74 +330,75 @@ const styles = StyleSheet.create({
   addressTextContainer: {
     flexDirection: 'row',
     flex: 1,
-    marginRight: 12,
-    paddingHorizontal: 18,
-    paddingLeft: 1,
+    marginRight: scale(12),
+    paddingHorizontal: scale(8), // Unified padding, removed conflicting paddingLeft
+  },
+  addressTextWrapper: {
+    flexShrink: 1, // Allow text to shrink if needed
   },
   locationIcon: {
-    marginRight: 12,
-    marginTop: 2,
+    marginRight: scale(12),
+    marginTop: scale(2),
   },
   cardLabel: {
-    fontSize: 14,
+    fontSize: scale(14),
     fontWeight: '600',
     color: Colors.textPrimary,
-    marginBottom: 4,
-    lineHeight: 20,
+    marginBottom: scale(4),
+    lineHeight: scale(20),
   },
   cardAddress: {
-    fontSize: 13,
+    fontSize: scale(13),
     color: Colors.gray,
-    lineHeight: 20,
-    width: '90%',
+    lineHeight: scale(20),
   },
   editButton: {
-    padding: 8,
+    padding: scale(8),
   },
   deleteContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    width: 90,
-    marginBottom: 16,
-    paddingRight: 10,
+    width: scale(90),
+    marginBottom: scale(16),
+    paddingRight: scale(10),
     backgroundColor: 'transparent',
   },
   deleteButton: {
     backgroundColor: Colors.red,
     justifyContent: 'center',
     alignItems: 'center',
-    width: 70,
+    width: scale(70),
     height: '100%',
-    borderRadius: 12,
+    borderRadius: scale(12),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: scale(2) },
     shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowRadius: scale(4),
     elevation: 3,
   },
   deleteButtonInner: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: scale(12),
   },
   deleteIcon: {
-    width: 24,
-    height: 24,
+    width: scale(24),
+    height: scale(24),
     tintColor: Colors.white,
   },
   errorText: {
-    fontSize: 14,
+    fontSize: scale(14),
     color: Colors.red,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: scale(12),
   },
   emptyText: {
-    fontSize: 14,
+    fontSize: scale(14),
     color: Colors.gray,
     textAlign: 'center',
-    marginVertical: 20,
+    marginVertical: scale(20),
   },
   modalOverlay: {
     flex: 1,
@@ -393,46 +408,46 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     backgroundColor: Colors.white,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: scale(16),
+    padding: scale(20),
     width: '80%',
-    maxWidth: 340,
+    maxWidth: scale(340),
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: scale(4) },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowRadius: scale(8),
     elevation: 5,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: scale(18),
     fontWeight: 'bold',
     color: Colors.textPrimary,
-    marginBottom: 12,
+    marginBottom: scale(12),
   },
   modalMessage: {
-    fontSize: 14,
+    fontSize: scale(14),
     color: Colors.gray,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: scale(20),
   },
   modalButtonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    gap: 12,
+    gap: scale(12),
   },
   modalButton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: scale(12),
+    borderRadius: scale(8),
     alignItems: 'center',
   },
   cancelButton: {
     backgroundColor: Colors.gray,
   },
   cancelButtonText: {
-    fontSize: 16,
+    fontSize: scale(16),
     color: Colors.white,
     fontWeight: '600',
   },
@@ -440,7 +455,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.red,
   },
   confirmButtonText: {
-    fontSize: 16,
+    fontSize: scale(16),
     color: Colors.white,
     fontWeight: '600',
   },

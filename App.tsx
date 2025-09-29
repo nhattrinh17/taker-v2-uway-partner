@@ -4,6 +4,7 @@ import notifee from '@notifee/react-native';
 import { SWRConfig, SWRConfiguration } from 'swr/dist/index';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import CodePush, { CodePushOptions } from 'react-native-code-push';
+import Toast from 'react-native-toast-message';
 
 type Props = {};
 
@@ -20,11 +21,14 @@ const App = (props: Props) => {
 
   notifee.cancelAllNotifications()
   return (
+    <>
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SWRConfig value={configuration}>
         <RootNavigation />
       </SWRConfig>
     </GestureHandlerRootView>
+    <Toast />
+    </>
   );
 };
 const AppWithCodePush = CodePush(configCodePush)(App);

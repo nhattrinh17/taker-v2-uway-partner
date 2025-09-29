@@ -44,9 +44,7 @@ import ModalSuccessOrder from '../../components/ModalSuccessOrder';
 import ViewImageModal from '../../components/ViewImageModal';
 import { PermissionsAndroid } from 'react-native';
 import FailureModal from '../../components/FailureModal';
-
-const { width } = Dimensions.get('window');
-const scale = (size: number) => (width / 375) * size;
+import { scale } from '../../ultils';
 
 type OrderDetailScreenRouteProp = RouteProp<RootNavigatorParamList, 'OrderDetail'>;
 

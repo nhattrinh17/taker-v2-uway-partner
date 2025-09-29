@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, StatusBar, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, StatusBar, TextInput, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../../assets/Colors';
 import { Icons } from '../../assets';
@@ -10,6 +10,7 @@ import { useUserStore } from '../../states/user';
 import QRCodePayment from '../../components/QRCodePayment';
 import SuccessModal from '../../components/SuccessModal';
 import InfoModal from '../../components/modals/InfoModal';
+import { useServicePackagesStore } from '../../states/servicePackages/servicePackagesStore';
 
 const presetAmounts = [100000, 200000, 300000, 500000, 1000000, 2000000];
 
@@ -17,19 +18,23 @@ const Deposit = () => {
   const { top } = useSafeAreaInsets();
   const navigation = useNavigation();
 
-  // BƯỚC 3: Thêm state để quản lý luồng hoạt động
   const [step, setStep] = useState<'amount' | 'qr'>('amount');
   const [amount, setAmount] = useState(0);
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { evidenceImage, setEvidenceImage } = useUserStore();
+  const { evidenceImage, setEvidenceImage } = useServicePackagesStore();
   const { triggerDepositWallet } = useDepositWallet();
   const { triggerUpBill } = useUpBill();
   const [isSuccessModalVisible, setSuccessModalVisible] = useState(false);
   const [isInfoModalVisible, setInfoModalVisible] = useState(false);
   const [infoModalConfig, setInfoModalConfig] = useState({ title: '', message: '' });
-  const transactionFee = 4500; // Phí này nên được lấy từ API
+  const transactionFee = 0; // Phí này nên được lấy từ API
   const totalAmount = amount + transactionFee;
+
+  // Log để debug evidenceImage
+  useEffect(() => {
+    console.log('evidenceImage:', evidenceImage);
+  }, [evidenceImage]);
 
   // Reset evidenceImage khi vào màn hình
   useEffect(() => {
@@ -40,10 +45,7 @@ const Deposit = () => {
     return value.toLocaleString('vi-VN');
   };
 
-  // BƯỚC 3: Thêm hàm xử lý logic cho nút "Tiếp tục"
-  // ...
   const handleContinue = async () => {
-    // Kiểm tra giới hạn số tiền
     if (step === 'amount') {
       if (amount < 5000 || amount > 10000000) {
         setInfoModalConfig({
@@ -51,27 +53,29 @@ const Deposit = () => {
           message: 'Số tiền nạp phải từ 5.000đ đến 10.000.000đ',
         });
         setInfoModalVisible(true);
-        return; // dừng lại, không gọi API
+        return;
       }
     }
 
     setIsLoading(true);
     try {
       if (step === 'amount') {
-        // Giai đoạn 1: Tạo giao dịch
         const res = await triggerDepositWallet({ amount });
+        console.log('reponse api: ',res);
         if (res && res.data) {
           setTransaction(res.data);
-          setStep('qr'); // chuyển sang bước QR
+          console.log('==>', transaction)
+          setStep('qr');
         }
       } else if (step === 'qr' && transaction) {
-        // Giai đoạn 2: Cập nhật hóa đơn
-        if (!evidenceImage) {
+        console.log('evidence:', evidenceImage);
+        if (!evidenceImage ) {
           setInfoModalConfig({
             title: 'Thông báo',
             message: 'Vui lòng tải lên hóa đơn thanh toán.',
           });
           setInfoModalVisible(true);
+          setIsLoading(false); 
           return;
         }
         await triggerUpBill({
@@ -89,11 +93,10 @@ const Deposit = () => {
       setInfoModalVisible(true);
     } finally {
       setIsLoading(false);
+      console.log('isLoading reset to false');
     }
   };
 
-
-  // BƯỚC 3: Render giao diện dựa trên `step`
   const renderContent = () => {
     if (step === 'amount') {
       return (
@@ -135,10 +138,7 @@ const Deposit = () => {
 
     if (step === 'qr' && transaction) {
       return (
-        <QRCodePayment
-          transaction={transaction}
-
-        />
+        <QRCodePayment transaction={transaction} />
       );
     }
     return null;
@@ -148,7 +148,7 @@ const Deposit = () => {
     <View style={[styles.container, { paddingTop: top }]}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => step === 'qr' ? setStep('amount') : navigation.goBack()}>
+        <TouchableOpacity onPress={() => (step === 'qr' ? setStep('amount') : navigation.goBack())}>
           <Icons.Backbutton width={27} height={27} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Nạp tiền</Text>
@@ -160,10 +160,10 @@ const Deposit = () => {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.continueButton, (isLoading || (step === 'qr' && !evidenceImage)) && styles.continueButtonDisabled]}
+        <TouchableOpacity 
+          style={[styles.continueButton, (isLoading || (step === 'qr' && !evidenceImage)) && styles.continueButtonDisabled]} 
           onPress={handleContinue}
-          disabled={isLoading || (step === 'qr' && !evidenceImage)}
+          // disabled={isLoading || (step === 'qr' && !evidenceImage)}
         >
           {isLoading ? <ActivityIndicator color="white" /> : <Text style={styles.continueButtonText}>Tiếp tục</Text>}
         </TouchableOpacity>
@@ -191,7 +191,6 @@ const Deposit = () => {
   );
 };
 
-// --- Các component con và style không đổi ---
 interface SummaryRowProps { label: string; value: string; isTotal?: boolean; isLast?: boolean; }
 const SummaryRow: React.FC<SummaryRowProps> = ({ label, value, isTotal = false, isLast = false }) => (
   <View style={[styles.summaryRow, isLast && { borderBottomWidth: 0 }]}>
@@ -216,7 +215,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: Colors.textPrimary,
     marginTop: 14,
-    marginBottom: 10
+    marginBottom: 10,
   },
   amountInput: {
     fontSize: 30,
@@ -257,7 +256,7 @@ const styles = StyleSheet.create({
   },
   presetButtonText: {
     fontSize: 14,
-    color: "#000000E5",
+    color: '#000000E5',
   },
   presetButtonTextSelected: {
     color: Colors.blue,
@@ -281,10 +280,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
-  summaryLabel: { fontSize: 14, color: "#000000" },
-  summaryValue: { fontSize: 14, color: "#000000" },
-  summaryLabelTotal: { fontSize: 14, color: "#000000" },
-  summaryValueTotal: { fontSize: 14, color: "#000000" },
+  summaryLabel: { fontSize: 14, color: '#000000' },
+  summaryValue: { fontSize: 14, color: '#000000' },
+  summaryLabelTotal: { fontSize: 14, color: '#000000' },
+  summaryValueTotal: { fontSize: 14, color: '#000000' },
   footer: {
     position: 'absolute',
     bottom: 0,
@@ -294,7 +293,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F4F8FB',
   },
   continueButton: {
-    backgroundColor: "#0B96DF",
+    backgroundColor: '#0B96DF',
     borderRadius: 30,
     height: 52,
     justifyContent: 'center',

@@ -159,7 +159,7 @@ const ChangePass = () => {
         <View style={styles.inputContainer}>
           <TextInput style={styles.input} placeholder="Mật khẩu" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={secureTextEntryConfirm} />
           <TouchableOpacity style={styles.deleteButton} onPress={() => setSecureTextEntryConfirm(!secureTextEntryConfirm)}>
-            {confirmPassword && (secureTextEntryConfirm ? <Icons.Eyes /> : <Icons.Eyesplash />)}
+            {confirmPassword && (secureTextEntryConfirm ? <Icons.Eyesplash /> : <Icons.Eyes />)}
           </TouchableOpacity>
         </View>
         <View style={{ marginVertical: 8 }}>

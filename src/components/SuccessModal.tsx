@@ -98,7 +98,6 @@ export default function SuccessModal({
               </TouchableOpacity>
             ) : null}
           </View>
-
           
         </Animated.View>
       </Pressable>

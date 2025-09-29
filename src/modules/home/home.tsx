@@ -5,14 +5,17 @@ import {
   FlatList,
   TouchableOpacity,
   SafeAreaView,
-  Dimensions,
 } from 'react-native';
 import { Icons } from '../../assets';
 import { Colors } from '../../assets/Colors';
 import { useUserStore } from '../../states/user';
 import { navigate } from '../../navigation/utils/navigationUtils';
 import { useGetWalletBalance } from '../../services/wallet';
-import { SocketService, SHOE_BOOKING_UPDATE_STATUS, SocketEvent } from '../../services/socket';
+import {
+  SocketService,
+  SHOE_BOOKING_UPDATE_STATUS,
+  SocketEvent,
+} from '../../services/socket';
 import { FlatListProps } from 'react-native/Libraries/Lists/FlatList';
 import { useGetAddress } from '../../services/address';
 import { styles } from './styles';
@@ -20,24 +23,28 @@ import ModalSelectBranch from '../../components/ModalSelectBranch';
 import SuccessModal from '../../components/SuccessModal';
 import { Order } from '../../services/shoe/typings';
 import HeaderHome from '../../components/HeaderHome';
-import { formatCurrencyRoundedToHundred, formatCustomDatetimeV2 } from '../../ultils/validation';
+import {
+  formatCurrencyRoundedToHundred,
+  formatCustomDatetimeV2,
+} from '../../ultils/validation';
 import { useRejectShoeBooking } from '../../services/shoe';
 import CancelModal from '../../components/CancelModal';
+import { scale } from '../../ultils';
 
-const { width } = Dimensions.get('window');
-const scale = (size: number) => (width / 375) * size;
-
-const OrderCard = ({ item, onAccept, onReject }: { item: Order; onAccept: (order: Order) => void; onReject: (order: Order) => void; }) => {
-  const { triggerRejectShoeBooking } = useRejectShoeBooking();
-
+const OrderCard = ({
+  item,
+  onAccept,
+  onReject,
+  onAccepted,
+}: {
+  item: Order;
+  onAccept: (order: Order) => void;
+  onReject: (order: Order) => void;
+  onAccepted: (acceptedId: string) => void;
+}) => {
   const handlePressItem = () => {
-    console.log('===>Item: ', item);
-    navigate('AcceptDetail', { item });
+    navigate('AcceptDetail', { item, onAccepted: onAccepted,})
   };
-
-  const handleReject = async (shoeBookingId: string) => {
-    await triggerRejectShoeBooking({ id: shoeBookingId });
-  }
 
   return (
     <TouchableOpacity onPress={handlePressItem}>
@@ -51,30 +58,49 @@ const OrderCard = ({ item, onAccept, onReject }: { item: Order; onAccept: (order
             <Text style={styles.serviceTitle}>{item.name || 'Dịch vụ giày'}</Text>
 
             <View style={styles.row}>
-
-              <Text style={styles.serviceLocation} numberOfLines={1} ellipsizeMode="tail">Mô tả: {item.shoeServiceDes}</Text>
+              <Text
+                style={styles.serviceLocation}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                Mô tả: {item.shoeServiceDes}
+              </Text>
             </View>
 
             <View style={styles.row}>
-              <Text style={styles.serviceLocation} numberOfLines={1} ellipsizeMode="tail">Giá Tiền: {formatCurrencyRoundedToHundred(item.finalPrice)}</Text>
+              <Text
+                style={styles.serviceLocation}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                Giá Tiền: {formatCurrencyRoundedToHundred(item.finalPrice)}
+              </Text>
             </View>
           </View>
 
           <View style={styles.timeContainer}>
-            <Text style={styles.timeText}>{formatCustomDatetimeV2(item.bookingTime)}</Text>
+            <Text style={styles.timeText}>
+              {formatCustomDatetimeV2(item.bookingTime)}
+            </Text>
             {item.expectedDeliveryTime === 'HOUR_0_24' && (
               <View style={styles.clockWrapper}>
-                <Icons.Clocks width={30} height={30} />   
+                <Icons.Clocks width={30} height={30} />
               </View>
             )}
           </View>
         </View>
 
         <View style={styles.cardFooter}>
-          <TouchableOpacity style={styles.rejectButton} onPress={() => onReject(item)}>
+          <TouchableOpacity
+            style={styles.rejectButton}
+            onPress={() => onReject(item)}
+          >
             <Text style={styles.rejectText}>Không nhận</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.acceptButton} onPress={() => onAccept(item)}>
+          <TouchableOpacity
+            style={styles.acceptButton}
+            onPress={() => onAccept(item)}
+          >
             <Text style={styles.acceptText}>Nhận đơn</Text>
           </TouchableOpacity>
         </View>
@@ -88,6 +114,7 @@ const Home = () => {
   const { triggerGetWalletBalance } = useGetWalletBalance();
   const { triggerGetAddress } = useGetAddress();
   const { triggerRejectShoeBooking } = useRejectShoeBooking();
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [showBranchModal, setShowBranchModal] = useState(false);
@@ -103,13 +130,37 @@ const Home = () => {
     setShowBranchModal(true);
   };
 
+  const handleOrderAccepted = (order: Order) => {
+    // Xoá khỏi danh sách ngay sau khi nhận
+    setOrders(prev => prev.filter(o => o.shoeBookingId !== order.shoeBookingId));
+    setSuccessType('accept');
+    setShowSuccess(true);
+  };
+
   const handleConfirmCancel = async () => {
     if (!selectedOrder) return;
     setShowCancelModal(false);
-    await triggerRejectShoeBooking({ id: selectedOrder.shoeBookingId });
-    setSuccessType('reject');
-    setShowSuccess(true);
+
+    try {
+      await triggerRejectShoeBooking({ id: selectedOrder.shoeBookingId });
+
+      // Ẩn đơn ngay lập tức
+      setOrders(prev =>
+        prev.filter(o => o.shoeBookingId !== selectedOrder.shoeBookingId),
+      );
+
+      setSuccessType('reject');
+      setShowSuccess(true);
+      setSelectedOrder(null);
+    } catch (err) {
+      console.error('❌ Hủy đơn thất bại:', err);
+    }
   };
+
+const handleOrderRemoved = (acceptedId: string) => {
+  setOrders(prev => prev.filter(o => o.shoeBookingId !== acceptedId));
+};
+
 
   const handleRejectPress = (order: Order) => {
     setSelectedOrder(order);
@@ -120,22 +171,25 @@ const Home = () => {
     triggerGetWalletBalance();
 
     socket.on('connect', () => console.log('✅ Socket connected'));
-    socket.on('disconnect', (reason: any) => console.log('❌ Socket disconnected:', reason));
-    socket.on('connect_error', (err: any) => console.error('⚠️ Socket connect_error:', err.message));
+    socket.on('disconnect', reason =>
+      console.log('❌ Socket disconnected:', reason),
+    );
+    socket.on('connect_error', err =>
+      console.error('⚠️ Socket connect_error:', err.message),
+    );
 
     const handleShoeBookingUpdate = (payload: Order) => {
-      console.log('[socket] shoe_booking_update payload:', payload);
-
       setOrders(prev => {
         const exists = prev.some(o => o.shoeBookingId === payload.shoeBookingId);
         const status = (payload.status || '').toLowerCase();
-        if (status === 'customer-cancelled') {
-          console.log('🗑 Lắng nghe huỷ đơn, xoá:', payload.shoeBookingId);
-          const next = prev.filter(
-            o => o.shoeBookingId.trim() !== String(payload.shoeBookingId).trim()
-          );
-          console.log('✅ After filter:', next.map(o => o.shoeBookingId));
-          return next;
+
+        // Loại bỏ nếu đơn bị hủy hoặc đã được shop khác nhận
+        if (
+          status === 'customer-cancelled' ||
+          status === 'cancelled' ||
+          status === 'other-shop-accepted'
+        ) {
+          return prev.filter(o => o.shoeBookingId !== String(payload.shoeBookingId));
         }
 
         const newOrderStatuses = [
@@ -148,16 +202,17 @@ const Home = () => {
         if (newOrderStatuses.includes(payload.status)) {
           return exists
             ? prev.map(o =>
-              o.shoeBookingId === payload.shoeBookingId ? payload : o
-            )
+                o.shoeBookingId === payload.shoeBookingId ? payload : o,
+              )
             : [payload, ...prev];
         }
+
         return exists
           ? prev.map(o =>
-            o.shoeBookingId === payload.shoeBookingId
-              ? { ...o, status: payload.status }
-              : o
-          )
+              o.shoeBookingId === payload.shoeBookingId
+                ? { ...o, status: payload.status }
+                : o,
+            )
           : prev;
       });
     };
@@ -192,14 +247,21 @@ const Home = () => {
         data={orders}
         key={orders.map(o => o.shoeBookingId).join(',')}
         removeClippedSubviews={false}
-        keyExtractor={(item) => item.shoeBookingId}
+        keyExtractor={item => item.shoeBookingId}
         extraData={orders}
         renderItem={({ item }) => (
-          <OrderCard item={item} onAccept={handleAcceptOrder} onReject={handleRejectPress} />
+          <OrderCard
+            item={item}
+            onAccept={handleAcceptOrder}
+            onReject={handleRejectPress}
+            onAccepted={handleOrderRemoved}
+          />
         )}
         contentContainerStyle={{ paddingBottom: scale(100) }}
         showsVerticalScrollIndicator={false}
-        ListEmptyComponent={<Text style={styles.emptyText}>Không có đơn hàng đề xuất</Text>}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>Không có đơn hàng đề xuất</Text>
+        }
         getItemLayout={getItemLayout}
         refreshing={refreshing}
         onRefresh={handleRefresh}
@@ -212,17 +274,10 @@ const Home = () => {
         onConfirm={(order, branch) => {
           console.log('✅ Xác nhận nhận đơn:', order, branch);
           setShowBranchModal(false);
-          setSuccessType('accept');
-          setShowSuccess(true);
+          handleOrderAccepted(order); // ✅ gọi xoá ngay lập tức
         }}
       />
 
-      title={successType === 'accept' ? 'Đã nhận đơn' : 'Đã từ chối đơn'}
-      message={
-        successType === 'accept'
-          ? 'Bạn đã nhận đơn thành công'
-          : 'Bạn đã từ chối đơn thành công'
-      }
       <CancelModal
         visible={showCancelModal}
         message="Bạn có chắc chắn muốn huỷ đơn hàng?"
@@ -230,10 +285,17 @@ const Home = () => {
         onClose={() => setShowCancelModal(false)}
         onContinue={handleConfirmCancel}
       />
+
       <SuccessModal
         visible={showSuccess}
-        title='Từ chối thành công'
-        message='Bạn đã từ chối đơn hàng thành công'
+        title={
+          successType === 'accept' ? 'Đã nhận đơn' : 'Đã từ chối đơn'
+        }
+        message={
+          successType === 'accept'
+            ? 'Bạn đã nhận đơn thành công'
+            : 'Bạn đã từ chối đơn thành công'
+        }
         onClose={() => setShowSuccess(false)}
       />
     </SafeAreaView>

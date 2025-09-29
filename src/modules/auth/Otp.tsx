@@ -23,18 +23,19 @@ type Props = {
 };
 
 const Otp: React.FC<Props> = ({ navigation, route }) => {
-  const { phoneNumber, id, type, name, email, password, confirmPassword, referralCode, checked, typeService } =
-    route.params || {};
+  const { phoneNumber, id, type, name, email, password, confirmPassword, referralCode, checked, typeService } = route.params || {};
   const { setLoading } = appStore();
   const [ok, setOk] = useState(false);
   const { triggerOtp } = useOtp();
   const { triggerOtpVerify } = useOtpVerify();
+  console.log('TYPE: ', type);
 
   // ====== State cho OTP ======
   const [code, setCode] = useState<string[]>(Array(6).fill(''));
   const inputRefs = useRef<Array<TextInput | null>>(Array(6).fill(null));
   const [timer, setTimer] = useState<number>(60);
   const [method, setMethod] = useState<string>(id || ''); // 'ZALO' | 'SMS' nếu BE trả
+  const [hasSent, setHasSent] = useState(false);
 
   // Đếm ngược resend
   useEffect(() => {
@@ -46,29 +47,39 @@ const Otp: React.FC<Props> = ({ navigation, route }) => {
   const effectiveType = type ?? 'existed';
 
   useEffect(() => {
+    if (hasSent && !name) return;
     const sendOtp = async () => {
-      console.log("[Otp] Gọi API triggerOtp với payload:", { id: phoneNumber, type: effectiveType });
+      console.log('[Otp] Gửi OTP:', { id: phoneNumber, type: type ?? 'existed' });
       setLoading(true);
       try {
-        const res = await triggerOtp({ type: effectiveType, id: phoneNumber });
-        console.log("[Otp] ✅ triggerOtp OK:", res?.data);
+        const res = await triggerOtp({ type: type ?? 'existed', phone: phoneNumber });
+        console.log('[Otp] ✅ triggerOtp OK:', res?.data);
         setMethod(res?.data?.method || res?.data);
         Toast.show({
           type: 'success',
           text1: 'Thành công',
-          text2: `Mã OTP đã được gửi${res?.data?.method ? ` qua ${res.data.method === 'ZALO' ? 'Zalo' : 'SMS'}` : ''}`,
+          text2: `Mã OTP đã được gửi${res?.data?.method
+            ? ` qua ${res.data.method === 'ZALO' ? 'Zalo' : 'SMS'}`
+            : ''}`,
           visibilityTime: 3000,
         });
       } catch (e: any) {
-        console.log("[Otp] ❌ triggerOtp lỗi:", e);
-        Toast.show({ type: 'error', text1: 'Gửi OTP thất bại', text2: e?.data?.message || 'Vui lòng thử lại' });
+        console.log('[Otp] ❌ triggerOtp lỗi:', e);
+        Toast.show({
+          type: 'error',
+          text1: 'Gửi OTP thất bại',
+          text2: e?.data?.message || 'Vui lòng thử lại',
+        });
       } finally {
         setLoading(false);
-        console.log("[Otp] 🔄 Kết thúc sendOtp");
+        setHasSent(true); // ✅ đánh dấu đã gửi
       }
     };
     sendOtp();
-  }, [phoneNumber, effectiveType]);
+    // chỉ chạy một lần khi mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   // Nhập OTP
   const handleCodeChange = (text: string, index: number) => {
@@ -106,27 +117,44 @@ const Otp: React.FC<Props> = ({ navigation, route }) => {
       const otpRes = await triggerOtpVerify({ otp, phone: phoneNumber });
       console.log('===> Res:', otpRes);
       // Đăng ký xong → quay về Login; nếu là 'forgot' thì ở chỗ gọi có thể navigate khác
-      if (type === 'forgot') {
+      if (type === 'existed' && !name) {
         navigationRef.navigate('ChangePassword', { phone: phoneNumber } as any);
-      } else {
+      } else if (type === 'existed' && !!name) {
+        setOk(true);
+      }
+      else {
         console.log(" ✅ Xác thực thành công, điều hướng sang Login");
         setOk(true);
-        navigationRef.navigate('Login');
+        //navigationRef.navigate('Login');
       }
     } catch (e: any) {
+      console.log('==>OTP:', e);
       const errCode = e?.data?.error || e?.response?.data?.error;
       const errMsg = e?.data?.message || e?.response?.data?.message;
       if (errCode === 'otp_limit_exceeded') {
         Toast.show({
           type: 'error',
           text1: 'Quá số lần cho phép',
-          text2: errMsg || 'Bạn đã nhập sai OTP quá số lần quy định. Vui lòng yêu cầu gửi lại mã mới.',
+          text2: 'Bạn đã nhập sai OTP quá số lần quy định. Vui lòng yêu cầu gửi lại mã mới.',
         });
-      } else {
+      } else if (errCode === 'opt_expired') {
+        Toast.show({
+          type: 'error',
+          text1: 'Mã OTP đã hết hạn',
+          text2: 'Mã OTP của bạn đã quá hạn. Vui lòng yêu cầu gửi lại mã mới.',
+        });
+      } else if (errCode === 'otp_invalid') {
+        Toast.show({
+          type: 'error',
+          text1: 'Mã OTP không đúng',
+          text2: 'Mã OTP không đúng. Vui lòng yêu cầu gửi lại mã mới.',
+        });
+      }
+      else {
         Toast.show({
           type: 'error',
           text1: 'Xác thực thất bại',
-          text2: errMsg || 'Mã OTP không chính xác',
+          text2: 'Mã OTP không chính xác',
         });
       }
 
@@ -140,15 +168,14 @@ const Otp: React.FC<Props> = ({ navigation, route }) => {
     if (timer > 0) return;
     console.log("[Otp] Resend OTP payload:", { id: phoneNumber, type: 'existed' });
     try {
-      await triggerOtp({ id: phoneNumber, type: 'existed' });
+      await triggerOtp({ phone: phoneNumber, type: 'existed' });
       setTimer(60);
       Toast.show({ type: 'success', text1: 'Đã gửi lại mã OTP' });
     } catch (e: any) {
       console.log("[Otp] ❌ Resend lỗi:", e);
-      Toast.show({ type: 'error', text1: 'Gửi lại OTP thất bại', text2: e?.data?.message || 'Vui lòng thử lại' });
+      Toast.show({ type: 'error', text1: 'Gửi lại OTP thất bại', text2: e?.data?.message === 'otp_limit_exceeded' ? 'Đã quá số lần gửi OTP. Vui lòng thử lại sau ít phút' : 'Vui lòng thử lại' });
     }
   };
-
 
   return (
     <SafeAreaView style={sx.container}>
@@ -159,13 +186,13 @@ const Otp: React.FC<Props> = ({ navigation, route }) => {
         <TouchableOpacity
           style={sx.backBtn}
           onPress={() => {
-            if (type === 'forgot') {
+            if (type === 'existed' && !name) {
               // Nếu là quên mật khẩu → quay về Login
               navigate('Login');
             }
-            else if(!type){
+            else if (!type) {
               navigate('Login');
-            } else {
+            } else if (type === 'existed' || type === 'not-existed') {
               // Mặc định quay lại SignUp và giữ lại các tham số cũ
               navigate('SignUp', {
                 name,

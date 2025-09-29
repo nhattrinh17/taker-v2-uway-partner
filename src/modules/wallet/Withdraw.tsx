@@ -70,6 +70,14 @@ const Withdraw = (props: Props) => {
       setInfoModalVisible(true);
       return;
     }
+    if (amount < 5000 || amount > 10000000) {
+        setInfoModalConfig({
+          title: 'Thông báo',
+          message: 'Số tiền rút phải từ 5.000đ đến 10.000.000đ',
+        });
+        setInfoModalVisible(true);
+        return;
+      }
     if (totalAmount > balance) {
       setInfoModalConfig({ title: "Không đủ số dư", message: `Số dư trong ví của bạn không đủ để thực hiện giao dịch này. Bạn cần ${formatCurrency(totalAmount)}đ.` });
       setInfoModalVisible(true);
@@ -99,8 +107,8 @@ const Withdraw = (props: Props) => {
 
       // --------- XỬ LÝ SAI MẬT KHẨU ----------
       const isWrongPass =
-        error?.data?.message === 'ACCESS_CODE_INVALID' ||
-        error?.message === 'ACCESS_CODE_INVALID' ||
+        error?.data?.message === 'password_invalid' ||
+        error?.message === 'password_invalid' ||
         error?.data?.message === 'Internal Server Error'; // tuỳ API trả
 
       if (isWrongPass) {
@@ -136,7 +144,6 @@ const Withdraw = (props: Props) => {
       setIsLoading(false);
     }
   };
-
 
   return (
     <View style={[styles.container, { paddingTop: top }]}>
