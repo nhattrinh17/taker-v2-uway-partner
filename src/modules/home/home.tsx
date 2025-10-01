@@ -36,14 +36,16 @@ const OrderCard = ({
   onAccept,
   onReject,
   onAccepted,
+  onRejected,
 }: {
   item: Order;
   onAccept: (order: Order) => void;
   onReject: (order: Order) => void;
   onAccepted: (acceptedId: string) => void;
+  onRejected: (rejectedId: string) => void;
 }) => {
   const handlePressItem = () => {
-    navigate('AcceptDetail', { item, onAccepted: onAccepted,})
+    navigate('AcceptDetail', { item, onAccepted: onAccepted, onRejected: onRejected })
   };
 
   return (
@@ -157,8 +159,12 @@ const Home = () => {
     }
   };
 
-const handleOrderRemoved = (acceptedId: string) => {
-  setOrders(prev => prev.filter(o => o.shoeBookingId !== acceptedId));
+  const handleOrderRemoved = (acceptedId: string) => {
+    setOrders(prev => prev.filter(o => o.shoeBookingId !== acceptedId));
+  };
+
+  const handleOrderRejected = (rejectedId: string) => {
+  setOrders(prev => prev.filter(o => o.shoeBookingId !== rejectedId));
 };
 
 
@@ -202,17 +208,17 @@ const handleOrderRemoved = (acceptedId: string) => {
         if (newOrderStatuses.includes(payload.status)) {
           return exists
             ? prev.map(o =>
-                o.shoeBookingId === payload.shoeBookingId ? payload : o,
-              )
+              o.shoeBookingId === payload.shoeBookingId ? payload : o,
+            )
             : [payload, ...prev];
         }
 
         return exists
           ? prev.map(o =>
-              o.shoeBookingId === payload.shoeBookingId
-                ? { ...o, status: payload.status }
-                : o,
-            )
+            o.shoeBookingId === payload.shoeBookingId
+              ? { ...o, status: payload.status }
+              : o,
+          )
           : prev;
       });
     };
@@ -245,7 +251,6 @@ const handleOrderRemoved = (acceptedId: string) => {
       <Text style={styles.sectionTitle}>Danh sách đơn hàng đề xuất</Text>
       <FlatList
         data={orders}
-        key={orders.map(o => o.shoeBookingId).join(',')}
         removeClippedSubviews={false}
         keyExtractor={item => item.shoeBookingId}
         extraData={orders}
@@ -255,6 +260,7 @@ const handleOrderRemoved = (acceptedId: string) => {
             onAccept={handleAcceptOrder}
             onReject={handleRejectPress}
             onAccepted={handleOrderRemoved}
+            onRejected={handleOrderRejected}
           />
         )}
         contentContainerStyle={{ paddingBottom: scale(100) }}

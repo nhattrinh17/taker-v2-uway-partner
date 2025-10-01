@@ -135,6 +135,9 @@ const Wallet = () => {
       });
       console.log('==History: ', res);
 
+      // Clear error on successful fetch
+      setError('');
+
       const newData: Transaction[] = res.data?.data ?? [];
       const totalFromApi = res.data?.pagination?.total ?? (pageToFetch === 1 ? newData.length : total);
       setTotal(totalFromApi);

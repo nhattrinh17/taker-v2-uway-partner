@@ -69,7 +69,7 @@ const SignUp = () => {
 
   const mapServerMsg = (msg?: string) => {
     if (!msg) return 'Có lỗi xảy ra, vui lòng thử lại';
-    if (msg.includes('duplicate entry')) return 'Số điện thoại hoặc email đã tồn tại';
+    if (msg.includes('duplicate entry')) return 'Số điện thoại đã tồn tại';
     switch (msg) {
       case 'phone_already_exists': return 'Số điện thoại đã tồn tại, vui lòng thực hiện đăng nhập';
       case 'phone_number_invalid': return 'Số điện thoại không hợp lệ';

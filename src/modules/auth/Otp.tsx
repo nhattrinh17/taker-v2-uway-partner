@@ -65,11 +65,20 @@ const Otp: React.FC<Props> = ({ navigation, route }) => {
         });
       } catch (e: any) {
         console.log('[Otp] ❌ triggerOtp lỗi:', e);
-        Toast.show({
-          type: 'error',
-          text1: 'Gửi OTP thất bại',
-          text2: e?.data?.message || 'Vui lòng thử lại',
-        });
+        if (e?.data?.message === 'otp_already_sent') {
+          Toast.show({
+            type: 'success',
+            text1: 'Mã OTP đã được gửi',
+            text2: 'Mã OTP đã được gửi, vui lòng nhập OTP.',
+          });
+        }
+        else {
+          Toast.show({
+            type: 'error',
+            text1: 'Gửi OTP thất bại',
+            text2: e?.data?.message || 'Vui lòng thử lại',
+          });
+        }
       } finally {
         setLoading(false);
         setHasSent(true); // ✅ đánh dấu đã gửi
@@ -248,6 +257,11 @@ const Otp: React.FC<Props> = ({ navigation, route }) => {
       </View>
       {/* timer */}
       <Text style={sx.timer}>00:{String(timer).padStart(2, '0')}</Text>
+      {timer === 0 && (
+        <Text style={sx.expiredText}>
+          Vui lòng Gửi lại mã để nhận mã OTP mới
+        </Text>
+      )}
       {/* nút xác thực */}
       <TouchableOpacity
         style={[
@@ -327,6 +341,13 @@ const sx = StyleSheet.create({
     fontSize: 20, fontFamily: Fonts.fontFamily.LexendSemiBold, color: Colors.black,
   },
   timer: { marginTop: 10, textAlign: 'center', color: Colors.black, fontFamily: Fonts.fontFamily.LexendRegular },
+  expiredText: { // New style for the expired message
+    marginTop: 8,
+    textAlign: 'center',
+    color: Colors.red, // Use red to indicate an issue, or adjust to match your design
+    fontFamily: Fonts.fontFamily.LexendRegular,
+    fontSize: 12,
+  },
   primaryBtn: {
     marginTop: 16, height: 48, borderRadius: 24, backgroundColor: Colors.blue,
     alignItems: 'center', justifyContent: 'center', marginHorizontal: 8,

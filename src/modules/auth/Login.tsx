@@ -121,13 +121,11 @@ const Login = () => {
       setToken(res.data.accessToken);
       setUser(res.data.user);
       if (remember) {
-        //await AsyncStorage.setItem('accessToken', res.data.accessToken);
         await AsyncStorage.setItem('savedPhone', phoneNumber);
         await AsyncStorage.setItem('savedPassword', password);
       } else {
-        //await AsyncStorage.removeItem('accessToken');
-        await AsyncStorage.removeItem('userPhoneNumber');
-        await AsyncStorage.removeItem('userPassword');
+        await AsyncStorage.removeItem('savedPhone');
+        await AsyncStorage.removeItem('savedPassword');
       }
       setOk(true);
       console.log('🚀 ~ Login ~ res:', res);
@@ -169,13 +167,22 @@ const Login = () => {
     const newVal = !remember;
     setRemember(newVal);
     await AsyncStorage.setItem('rememberLogin', JSON.stringify(newVal));
+    if (!newVal) {
+      await AsyncStorage.removeItem('savedPhone');
+      await AsyncStorage.removeItem('savedPassword');
+    }
   };
-
   useEffect(() => {
     (async () => {
-      const saved = await AsyncStorage.getItem('rememberLogin');
-      if (saved !== null) {
-        setRemember(JSON.parse(saved));
+      const savedRemember = await AsyncStorage.getItem('rememberLogin');
+      const isRemember = savedRemember ? JSON.parse(savedRemember) : false;
+      setRemember(isRemember);
+
+      if (isRemember) {
+        const savedPhone = await AsyncStorage.getItem('savedPhone');
+        const savedPassword = await AsyncStorage.getItem('savedPassword');
+        if (savedPhone) setPhoneNumber(savedPhone);
+        if (savedPassword) setPassword(savedPassword);
       }
     })();
   }, []);

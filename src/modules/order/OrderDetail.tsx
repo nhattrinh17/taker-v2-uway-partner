@@ -566,7 +566,9 @@ const OrderDetail = ({ route }: Props) => {
               <View style={styles.feeRow}>
                 <Text style={styles.feeLabel}>Cước phí</Text>
                 <Text style={styles.feeValue}>
-                  {formatCurrencyRoundedToHundred(orderData.finalPrice)}
+                  {formatCurrencyRoundedToHundred(
+                    (orderData.finalPrice ?? 0) - (orderData.shoeService?.price ?? 0)
+                  )}
                 </Text>
               </View>
               <View style={styles.feeRow}>
@@ -691,7 +693,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     borderRadius: 16,
   },
-    detailSection1: {
+  detailSection1: {
     paddingHorizontal: scale(16),
     paddingVertical: scale(12),
     backgroundColor: '#fff',

@@ -165,7 +165,9 @@ const Withdraw = (props: Props) => {
         errorMessage = `Mật khẩu không chính xác. Bạn còn ${MAX_FAILED_ATTEMPTS - nextAttempts} lần thử.`;
       }
     }
-
+    if(error.data.message){
+      errorMessage = error.data.message;
+    }
     setInfoModalConfig({ title: 'Rút tiền thất bại', message: errorMessage });
     setInfoModalVisible(true);
   } finally {

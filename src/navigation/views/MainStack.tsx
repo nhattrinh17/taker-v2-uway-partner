@@ -18,7 +18,7 @@ import Deposit from '../../modules/wallet/Deposit';
 import Withdraw from '../../modules/wallet/Withdraw';
 import TransactionDetail from '../../modules/wallet/TransactionDetails';
 import OrderStack from './OrdersStack';
-// import ChatStack from './ChatStack';
+import { SafeAreaView } from 'react-native-safe-area-context';
 // import ServiceStack from './ServiceStack';
 // import DeliveryStack from './DeliveryStack';
 import SupportCenter from '../../modules/profile/SupportCenter';
@@ -52,7 +52,7 @@ export default function MainStack() {
   }, [token]);
 
   return (
-    <>
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
       <StatusBar translucent barStyle="dark-content" backgroundColor={Colors.transparent} />
       <Stack.Navigator
         screenOptions={{ headerShown: false }}
@@ -86,6 +86,6 @@ export default function MainStack() {
 
         
       </Stack.Navigator>
-    </>
+    </SafeAreaView>
   );
 }
