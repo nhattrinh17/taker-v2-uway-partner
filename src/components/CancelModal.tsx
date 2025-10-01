@@ -29,7 +29,7 @@ const CancelModal: React.FC<CancelModalProps> = ({ visible, onClose, onContinue,
               <TouchableOpacity style={styles.btnBack} onPress={onClose}>
                 <Text style={styles.textBtnBack}>Quay lại</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.btnCancel, (textBtn == 'Xác nhận' || textBtn == 'Tiếp tục' || textBtn == 'Bắt đầu' )|| colorBtn ? { backgroundColor: Colors.main, paddingHorizontal: 30 } : '']} onPress={onContinue}>
+              <TouchableOpacity style={[styles.btnCancel, (textBtn == 'Xác nhận' || textBtn == 'Tiếp tục' || textBtn == 'Bắt đầu') || colorBtn ? { backgroundColor: Colors.main, paddingHorizontal: 30 } : '']} onPress={onContinue}>
                 <Text style={styles.textBtnBack}>{textBtn}</Text>
               </TouchableOpacity>
             </View>

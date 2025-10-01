@@ -246,8 +246,8 @@ const Wallet = () => {
           <View style={{ flexShrink: 1 }}>
             <CommonText text="Ví Uway" styles={styles.labelWalletBox} />
             <View style={styles.balanceRow}>
-              <Text style={styles.labelAmount}>
-                {formatCurrency(balance || 0)} <Text style={styles.balanceUnit}>đ</Text>
+              <Text style={styles.labelAmount} >
+                {formatCurrency(balance || 0)}<Text style={styles.balanceUnit}>đ</Text>
               </Text>
             </View>
           </View>
@@ -383,13 +383,13 @@ const styles = StyleSheet.create({
   },
   balanceRow: { flexDirection: 'row', alignItems: 'flex-end', marginTop: scale(6) },
   labelAmount: {
-    fontSize: scale(28),
+    fontSize: scale(27),
     color: Colors.white,
     fontFamily: Fonts.fontFamily?.LexendSemiBold,
   },
   balanceUnit: {
     color: Colors.white,
-    fontSize: scale(28),
+    fontSize: scale(24),
     marginLeft: 0,
     fontFamily: Fonts.fontFamily?.LexendRegular,
   },

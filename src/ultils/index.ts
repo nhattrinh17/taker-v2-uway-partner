@@ -3,8 +3,15 @@ import Toast from 'react-native-toast-message';
 import { Dimensions } from 'react-native';
 import { Colors } from '../assets/Colors';
 
-const { width } = Dimensions.get('window');
-export const scale = (size: number) => (width / 375) * size;
+// const { width } = Dimensions.get('window');
+// export const scale = (size: number) => (width / 375) * size;
+
+const { width, height } = Dimensions.get('window');
+const guidelineBaseWidth = 375;
+const guidelineBaseHeight = 812;
+
+export const scale = (size: number) =>
+  size * Math.min(width / guidelineBaseWidth, height / guidelineBaseHeight);
 /**
  * Hiển thị thông báo lỗi.
  * Có thể nhận vào một chuỗi (string) hoặc một đối tượng lỗi (error object).

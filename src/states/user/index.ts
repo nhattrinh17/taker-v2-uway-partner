@@ -13,13 +13,13 @@ const initialUser: userInfo = {
   avatar: null,
   status: 'PENDING',
   operatingHours: {
-    monday:  null,
-    tuesday:  null,
-    wednesday:  null,
-    thursday:  null,
-    friday:  null,
-    saturday:  null,
-    sunday:  null,
+    monday: null,
+    tuesday: null,
+    wednesday: null,
+    thursday: null,
+    friday: null,
+    saturday: null,
+    sunday: null,
   },
   type: 'SHOE_CLEANING',
   // Thêm các giá trị mặc định khác nếu cần
@@ -42,6 +42,13 @@ type Actions = {
   setCallId: (callId: string) => void;
   logout: () => void;
   setEvidenceImage: (image: string) => void;
+  failedAttempts: number;
+  lastFailedAttempt: number | null;
+  walletLockoutUntil: number | null;
+  incrementFailedAttempts: () => void;
+  resetFailedAttempts: () => void;
+  setWalletLockout: (durationMs: number) => void;
+  setLastFailedAttempt: () => void;
 };
 
 export const useUserStore = create<State & Actions>()(
@@ -49,13 +56,13 @@ export const useUserStore = create<State & Actions>()(
     (set) => ({
       // --- STATE ---
       token: '',
-      user: initialUser,  
+      user: initialUser,
       isPasswordRequired: false,
       balance: 0,
       callId: '',
       evidenceImage: '',
       // --- ACTIONS ---
-      setUser: (user) => set({ user }), 
+      setUser: (user) => set({ user }),
 
       // Đã đơn giản hóa, middleware persist sẽ tự động lưu vào AsyncStorage
       setToken: (token) => set({ token }),
@@ -65,6 +72,13 @@ export const useUserStore = create<State & Actions>()(
       setCallId: (callId) => set({ callId }),
 
       setEvidenceImage: (image) => set({ evidenceImage: image }),
+      failedAttempts: 0,
+      lastFailedAttempt: null,
+      walletLockoutUntil: null,
+      incrementFailedAttempts: () => set((state) => ({ failedAttempts: state.failedAttempts + 1 })),
+      resetFailedAttempts: () => set({ failedAttempts: 0, lastFailedAttempt: null }), // Reset cả lastFailedAttempt
+      setWalletLockout: (durationMs) => set({ walletLockoutUntil: Date.now() + durationMs }),
+      setLastFailedAttempt: () => set({ lastFailedAttempt: Date.now() }),
 
       // Thêm một action logout để reset state về ban đầu
       logout: () => set({ token: '', user: initialUser, balance: 0 }),

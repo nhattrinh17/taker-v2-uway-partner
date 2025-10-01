@@ -171,6 +171,11 @@ const Orders = () => {
         ))}
       </ScrollView>
 
+      {!loading && !error && orders.length > 0 && (
+        <Text style={styles.listTitle}>Danh sách đơn hàng của bạn</Text>
+      )}
+
+
       {/* Order List */}
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -186,7 +191,7 @@ const Orders = () => {
           renderItem={({ item }) => <OrderCard item={item} />}
           keyExtractor={(item, index) => (item.id ? String(item.id) : `idx-${index}`)}
           contentContainerStyle={styles.listContainer}
-          ListHeaderComponent={<Text style={styles.listTitle}>Danh sách đơn hàng của bạn</Text>}
+          //ListHeaderComponent={<Text style={styles.listTitle}>Danh sách đơn hàng của bạn</Text>}
           ListEmptyComponent={<Text style={styles.emptyText}>Không có đơn hàng nào.</Text>}
           onEndReached={loadMore}
           onEndReachedThreshold={0.3}
@@ -216,7 +221,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    height: 60,
+    height: 50,
     backgroundColor: Colors.background,
   },
   headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#1C1C1E' },
@@ -233,7 +238,7 @@ const styles = StyleSheet.create({
   filterText: { fontSize: 14, color: '#3C3C43' },
   activeFilterText: { color: 'white', fontWeight: '600' },
   listContainer: { padding: 16 },
-  listTitle: { fontSize: 16, fontWeight: '600', color: '#1C1C1E', marginBottom: 16 },
+  listTitle: { fontSize: 18, fontWeight: '600', color: '#1C1C1E', marginBottom: 16, paddingHorizontal: 16, paddingTop: 10 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorText: { fontSize: 16, color: '#FF3B30' },

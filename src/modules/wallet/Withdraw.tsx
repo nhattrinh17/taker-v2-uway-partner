@@ -13,6 +13,11 @@ import SuccessModal from '../../components/SuccessModal';
 import { RootNavigatorParamList } from '../../navigation/typings';
 import FailureModal from '../../components/FailureModal';
 
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MINUTES = 15;
+const LOCKOUT_DURATION_MS = LOCKOUT_DURATION_MINUTES * 60 * 1000;
+const RESET_TIMEOUT_MS = 30 * 60 * 1000;
+
 type Props = {
   route: RouteProp<RootNavigatorParamList, 'WithDraw'>;
 };
@@ -23,7 +28,18 @@ const Withdraw = (props: Props) => {
   const navigation = useNavigation();
 
   // SỬA ĐỔI: Lấy `balance` từ user store và khởi tạo các hook API
-  const { user, balance } = useUserStore(state => state);
+  const {
+    user,
+    balance,
+    setBalance,
+    failedAttempts,
+    walletLockoutUntil,
+    lastFailedAttempt, // Thêm lastFailedAttempt
+    incrementFailedAttempts,
+    resetFailedAttempts,
+    setWalletLockout,
+    setLastFailedAttempt, // Thêm setLastFailedAttempt
+  } = useUserStore(state => state);
   const { triggerWithdrawWallet } = useWithdrawWallet();
   const { triggerGetWalletAccessCode } = useGetWalletAccessCode();
 
@@ -40,6 +56,7 @@ const Withdraw = (props: Props) => {
   const [lastFailTime, setLastFailTime] = useState<number | null>(null);
   const transactionFee = 0; // Phí này nên được lấy từ API
   const totalAmount = amount + transactionFee;
+  
 
   const now = () => Date.now();
   const formatCurrency = (value: number) => {
@@ -87,63 +104,74 @@ const Withdraw = (props: Props) => {
     setPasswordModalVisible(true);
   };
 
+  const checkLockout = () => {
+  // Kiểm tra nếu ví đang bị khóa
+  if (walletLockoutUntil && Date.now() < walletLockoutUntil) {
+    const remainingMs = walletLockoutUntil - Date.now();
+    const remainingMinutes = Math.ceil(remainingMs / 60000);
+    setInfoModalConfig({
+      title: 'Ví đã bị khóa',
+      message: `Bạn đã nhập sai mật khẩu quá nhiều lần. Vui lòng thử lại sau ${remainingMinutes} phút.`,
+    });
+    setInfoModalVisible(true);
+    return true; // Bị khóa
+  }
+
+  // Kiểm tra nếu đã quá 30 phút từ lần nhập sai gần nhất
+  if (lastFailedAttempt && Date.now() - lastFailedAttempt > RESET_TIMEOUT_MS) {
+    console.log('[Withdraw] 🔄 Reset failedAttempts vì đã quá 30 phút kể từ lần nhập sai gần nhất.');
+    resetFailedAttempts();
+  }
+
+  return false; // Không bị khóa
+};
+
   // SỬA ĐỔI: Hoàn thiện logic gọi API sau khi xác nhận mật khẩu
   const handleConfirmPassword = async (password: string) => {
-    setPasswordModalVisible(false);
-    setIsLoading(true);
-    try {
-      const accessCodeRes = await triggerGetWalletAccessCode({ password });
-      const accessCode = accessCodeRes.data;
-      if (!accessCode) throw new Error("ACCESS_CODE_INVALID");
+  setPasswordModalVisible(false);
+  setIsLoading(true);
+  try {
+    const accessCodeRes = await triggerGetWalletAccessCode({ password });
+    const accessCode = accessCodeRes.data;
 
-      await triggerWithdrawWallet({ amount, accessCode });
-      setSuccessModalVisible(true);
-
-      // ✅ Nếu rút thành công thì reset đếm sai
-      setWrongCount(0);
-      setLastFailTime(null);
-    } catch (error: any) {
-      console.error("Lỗi khi rút tiền:", error);
-
-      // --------- XỬ LÝ SAI MẬT KHẨU ----------
-      const isWrongPass =
-        error?.data?.message === 'password_invalid' ||
-        error?.message === 'password_invalid' ||
-        error?.data?.message === 'Internal Server Error'; // tuỳ API trả
-
-      if (isWrongPass) {
-        const nowTime = Date.now();
-        const newCount = wrongCount + 1;
-        setWrongCount(newCount);
-        setLastFailTime(nowTime);
-
-        if (newCount >= 5) {
-          // khoá 5 phút
-          setLockUntil(nowTime + 5 * 60 * 1000);
-          setInfoModalConfig({
-            title: "Tài khoản tạm khóa",
-            message: "Bạn đã nhập sai quá 5 lần. Vui lòng thử lại sau 5 phút.",
-          });
-          setInfoModalVisible(true);
-        } else {
-          setInfoModalConfig({
-            title: "Rút tiền thất bại",
-            message: `Mật khẩu không chính xác. Bạn còn ${5 - newCount} lần thử.`,
-          });
-          setInfoModalVisible(true);
-        }
-      } else {
-        setInfoModalConfig({
-          title: "Rút tiền thất bại",
-          message: "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
-        });
-        setInfoModalVisible(true);
-      }
-      // ---------------------------------------
-    } finally {
-      setIsLoading(false);
+    if (!accessCode) {
+      throw new Error('Không thể lấy mã truy cập.');
     }
-  };
+
+    // Mật khẩu đúng, reset số lần thử sai
+    resetFailedAttempts();
+
+    await triggerWithdrawWallet({
+      amount: amount,
+      accessCode: accessCode,
+    });
+
+    setSuccessModalVisible(true);
+  } catch (error: any) {
+    console.log('Lỗi rút tiền:', error);
+    const isIncorrectPassword = error?.data?.message === 'Internal Server Error' || 'password_invalid';
+    let errorMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại sau.';
+
+    if (isIncorrectPassword) {
+      // Cập nhật thời điểm nhập sai
+      setLastFailedAttempt();
+      incrementFailedAttempts();
+      const nextAttempts = failedAttempts + 1;
+
+      if (nextAttempts >= MAX_FAILED_ATTEMPTS) {
+        setWalletLockout(LOCKOUT_DURATION_MS);
+        errorMessage = `Bạn đã nhập sai mật khẩu ${nextAttempts} lần. Ví của bạn đã bị khóa trong ${LOCKOUT_DURATION_MINUTES} phút.`;
+      } else {
+        errorMessage = `Mật khẩu không chính xác. Bạn còn ${MAX_FAILED_ATTEMPTS - nextAttempts} lần thử.`;
+      }
+    }
+
+    setInfoModalConfig({ title: 'Rút tiền thất bại', message: errorMessage });
+    setInfoModalVisible(true);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <View style={[styles.container, { paddingTop: top }]}>

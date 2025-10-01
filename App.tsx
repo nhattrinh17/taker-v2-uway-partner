@@ -5,6 +5,7 @@ import { SWRConfig, SWRConfiguration } from 'swr/dist/index';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import CodePush, { CodePushOptions } from 'react-native-code-push';
 import Toast from 'react-native-toast-message';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 type Props = {};
 
@@ -22,12 +23,15 @@ const App = (props: Props) => {
   notifee.cancelAllNotifications()
   return (
     <>
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SWRConfig value={configuration}>
-        <RootNavigation />
-      </SWRConfig>
-    </GestureHandlerRootView>
-    <Toast />
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <SWRConfig value={configuration}>
+            <RootNavigation />
+          </SWRConfig>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+      <Toast />
+
     </>
   );
 };

@@ -28,10 +28,11 @@ const ModalOrderSearch = ({ isVisible, onClose, onSearch, title, statusLabels }:
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
   const [openPicker, setOpenPicker] = useState<null | 'start' | 'end'>(null);
-  const [showStatusModal, setShowStatusModal] = useState(false); // Android
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [isFromDateInvalid, setIsFromDateInvalid] = useState(false); // State để kiểm tra fromDate
 
   const statusKeys = Object.keys(statusLabels);
-  console.log('Modal Order Search here')
+
   const handleSelectStatus = () => {
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
@@ -43,7 +44,6 @@ const ModalOrderSearch = ({ isVisible, onClose, onSearch, title, statusLabels }:
         (buttonIndex) => {
           if (buttonIndex < statusKeys.length) {
             const selectedKey = statusKeys[buttonIndex];
-            // Toggle: nếu bấm lại cùng trạng thái -> bỏ chọn
             setStatus(prev => (prev === selectedKey ? '' : selectedKey));
           }
         },
@@ -54,26 +54,31 @@ const ModalOrderSearch = ({ isVisible, onClose, onSearch, title, statusLabels }:
   };
 
   const handleClose = () => {
-    // reset toàn bộ khi đóng
     setStatus('');
     setFromDate(null);
     setToDate(null);
+    setIsFromDateInvalid(false); // Reset lỗi khi đóng
     setShowStatusModal(false);
     onClose();
   };
 
   const handleSearch = () => {
+    if (isFromDateInvalid) return; // Ngăn tìm kiếm nếu fromDate không hợp lệ
     onSearch({
-  status,
-  fromDate: fromDate
-    ? new Date(fromDate.setHours(0, 0, 0, 0)).toISOString()
-    : '',
-  toDate: toDate
-    ? new Date(toDate.setHours(23, 59, 59, 999)).toISOString()
-    : '',
-});
-
+      status,
+      fromDate: fromDate ? new Date(fromDate.setHours(0, 0, 0, 0)).toISOString() : '',
+      toDate: toDate ? new Date(toDate.setHours(23, 59, 59, 999)).toISOString() : '',
+    });
     handleClose();
+  };
+
+  const handleFromDateConfirm = (date: Date) => {
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // Đặt thời gian cuối ngày hiện tại
+    const isInvalid = date > today; // Kiểm tra nếu ngày chọn lớn hơn ngày hiện tại
+    setIsFromDateInvalid(isInvalid);
+    setFromDate(prev => (prev && prev.toDateString() === date.toDateString() ? null : date));
+    setOpenPicker(null);
   };
 
   return (
@@ -109,9 +114,10 @@ const ModalOrderSearch = ({ isVisible, onClose, onSearch, title, statusLabels }:
                 </Text>
               </View>
             </TouchableOpacity>
-
+            {isFromDateInvalid && (
+              <Text style={styles.errorText}>Ngày bắt đầu không được lớn hơn ngày hiện tại</Text>
+            )}
             <View style={styles.divider} />
-
             <TouchableOpacity style={styles.dateItem} onPress={() => setOpenPicker('end')}>
               <Icons.Date width={40} height={40} color={Colors.blue} />
               <View style={{ marginLeft: 8 }}>
@@ -124,7 +130,11 @@ const ModalOrderSearch = ({ isVisible, onClose, onSearch, title, statusLabels }:
           </View>
 
           {/* Search button */}
-          <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
+          <TouchableOpacity
+            style={[styles.searchButton, isFromDateInvalid && styles.searchButtonDisabled]}
+            onPress={handleSearch}
+            disabled={isFromDateInvalid}
+          >
             <Text style={styles.searchText}>Tìm kiếm</Text>
           </TouchableOpacity>
         </View>
@@ -136,12 +146,7 @@ const ModalOrderSearch = ({ isVisible, onClose, onSearch, title, statusLabels }:
         mode="date"
         open={openPicker === 'start'}
         date={fromDate || new Date()}
-        onConfirm={(date) => {
-          setFromDate(prev =>
-            prev && prev.toDateString() === date.toDateString() ? null : date
-          );
-          setOpenPicker(null);
-        }}
+        onConfirm={handleFromDateConfirm}
         onCancel={() => setOpenPicker(null)}
       />
 
@@ -151,9 +156,7 @@ const ModalOrderSearch = ({ isVisible, onClose, onSearch, title, statusLabels }:
         open={openPicker === 'end'}
         date={toDate || new Date()}
         onConfirm={(date) => {
-          setToDate(prev =>
-            prev && prev.toDateString() === date.toDateString() ? null : date
-          );
+          setToDate(prev => (prev && prev.toDateString() === date.toDateString() ? null : date));
           setOpenPicker(null);
         }}
         onCancel={() => setOpenPicker(null)}
@@ -172,7 +175,8 @@ const ModalOrderSearch = ({ isVisible, onClose, onSearch, title, statusLabels }:
                   onPress={() => {
                     setStatus(prev => (prev === item ? '' : item));
                     setShowStatusModal(false);
-                  }}>
+                  }}
+                >
                   <Text style={styles.statusText}>{statusLabels[item]}</Text>
                 </TouchableOpacity>
               )}
@@ -273,6 +277,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  searchButtonDisabled: {
+    backgroundColor: Colors.grayLight,
+    opacity: 0.6,
+  },
   searchText: {
     fontSize: 16,
     fontWeight: '600',
@@ -294,6 +302,12 @@ const styles = StyleSheet.create({
   cancelBtn: {
     marginTop: 10,
     alignSelf: 'center',
+  },
+  errorText: {
+    fontSize: 12,
+    color: Colors.red,
+    marginHorizontal: 12,
+    marginBottom: 8,
   },
 });
 

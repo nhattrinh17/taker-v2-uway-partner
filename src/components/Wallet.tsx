@@ -19,22 +19,20 @@ const WalletHeader: React.FC<WalletHeaderProps> = ({ balance, average }) => {
         onPress={() => navigate('WalletStack', { screen: 'Wallet' })}
         activeOpacity={0.8}
       >
-        <Icons.WalletTabActive width={35} height={35} />
-        <View style={{ marginLeft: 8 }}>
+        <Icons.WalletTabActive width={scale(35)} height={scale(35)} />
+        <View style={styles.textContainer}>
           <Text style={styles.textTitle}>Số dư ví</Text>
-          <Text style={styles.textContent} >
+          <Text style={styles.textContent} numberOfLines={1}>
             {formatCurrency(!balance ? '0' : balance.toString())}đ
           </Text>
         </View>
       </TouchableOpacity>
-      <TouchableOpacity >
+      <TouchableOpacity>
         <View style={styles.historyContainer}>
-          <View>
-            <Icons.StarActive width={35} height={35} />
-          </View>
+          <Icons.StarActive width={scale(35)} height={scale(35)} />
           <View>
             <Text style={styles.infoLabel}>Điểm đánh giá</Text>
-            <Text style={styles.infoValue}> {average.toFixed(1)}/5</Text>
+            <Text style={styles.infoValue}>{average.toFixed(1)}/5</Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -47,50 +45,57 @@ export default WalletHeader;
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.white,
-    marginHorizontal: 20,
-    borderRadius: 18,
-    paddingHorizontal: 24,   // ⬅️ lùi 2 bên vào
-    paddingVertical: 20,
+    marginHorizontal: scale(20),
+    borderRadius: scale(18),
+    paddingHorizontal: scale(24),
+    paddingVertical: scale(20),
     flexDirection: 'row',
-    justifyContent: 'space-around', // ⬅️ chia đều & tách khỏi lề
+    justifyContent: 'space-between',
     alignItems: 'center',
+    //gap: scale(2), // Tăng gap để tạo khoảng cách lớn hơn
     elevation: 10,
-    transform: [{ translateY: 5 }],
+    transform: [{ translateY: scale(5) }],
   },
   walletSection: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
+    maxWidth: '70%', // Giảm maxWidth để tạo thêm không gian
+    flexShrink: 1,
+  },
+  textContainer: {
+    marginLeft: scale(2),
+    flexShrink: 1,
   },
   historyContainer: {
-    flex: 1,
-    gap: 5,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
+    flexShrink: 0, 
   },
   textTitle: {
     fontFamily: Fonts.fontFamily.LexendBold,
     fontSize: scale(16),
-    color: 'black',
+    color: Colors.black,
     fontWeight: 'bold',
   },
   textContent: {
-    fontSize: Fonts.fontSize[16],
+    fontSize: scale(15),
     fontFamily: Fonts.fontFamily.LexendRegular,
     color: Colors.black,
-    lineHeight: 24,
-    flexShrink: 1,          // cho phép xuống dòng khi quá dài
-    flexWrap: 'wrap',       // ↓ cần cho xuống dòng
+    lineHeight: scale(24),
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    maxWidth: scale(150),
   },
   infoLabel: {
     fontSize: scale(16),
-    color: 'black',
+    color: Colors.black,
     fontWeight: 'bold',
   },
   infoValue: {
-    fontSize: scale(16),
+    fontSize: scale(15),
     fontWeight: '600',
+    marginLeft: scale(4),
   },
 });
