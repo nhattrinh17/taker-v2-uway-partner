@@ -12,7 +12,7 @@ import { Dimensions } from 'react-native';
 const screenWidth = Dimensions.get('window').width;
 const style = StyleSheet.create({
   text: {
-    fontSize: Fonts.fontSize[18],
+    fontSize: Fonts.fontSize[24],
     fontFamily: Fonts.fontFamily.LexendBold,
     color: Colors.black,
     lineHeight: 24,

@@ -339,6 +339,7 @@ const styles = StyleSheet.create({
     fontSize: scale(18),
     color: Colors.black,
     fontFamily: Fonts.fontFamily?.LexendSemiBold,
+    fontWeight: 'bold',
   },
   headerRight: { width: scale(70), alignItems: 'flex-end' },
   headerAction: {

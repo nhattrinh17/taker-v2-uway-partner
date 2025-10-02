@@ -25,6 +25,7 @@ import { Fonts } from '../../assets';
 import { navigate, replace, goBack } from '../../navigation/utils/navigationUtils';
 import Modal from 'react-native-modal';
 import { USER_STATUS } from '../../ultils';
+import Header from '../../components/Header';
 
 const Profile = () => {
   const { top } = useSafeAreaInsets();
@@ -81,19 +82,8 @@ const Profile = () => {
       >
         {/* Error Message */}
         {error ? <Text style={{ color: Colors.red, textAlign: 'center', marginVertical: 10 }}>{error}</Text> : null}
-
-        {/* Header */}
-        <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => goBack()}>
-            {Icons.BackbuttonProfile ? (
-              <Icons.BackbuttonProfile width={45} height={45} />
-            ) : (
-              <Text style={{ fontSize: 24, color: Colors.textPrimary }}>‹</Text>
-            )}
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Hồ sơ</Text>
-          <View style={{ width: 45 }} />
-        </View>
+        
+        <Header title='Hồ sơ'/>
 
         {/* Avatar + Name card */}
         <View style={styles.cardProfile}>

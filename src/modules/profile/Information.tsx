@@ -27,6 +27,7 @@ import CancelModal from '../../components/CancelModal';
 import SuccessModal from '../../components/SuccessModal';
 import { goBack } from '../../navigation/utils/navigationUtils';
 import InputRow from '../../components/InputRow';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const defaultOperatingHours: IOperatingHours = {
   monday: null,
@@ -277,165 +278,167 @@ const Information = () => {
   }
 
   return (
-    <View style={[styles.container, { paddingTop: top }]}>
-      <StatusBar barStyle="dark-content" />
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => {
-            if (hasChanges()) {
-              setShowConfirmModal(true);
-            } else {
-              navigation.goBack();
-            }
-          }}
-          style={styles.backButton}
-        >
-          <Icons.BackbuttonProfile width={45} height={45} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Thông tin cá nhân</Text>
-        <View style={{ width: 45 }} />
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        <View style={styles.avatarContainer}>
-          <Avatar />
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+      <View style={[styles.container, { paddingTop: top }]}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => {
+              if (hasChanges()) {
+                setShowConfirmModal(true);
+              } else {
+                navigation.goBack();
+              }
+            }}
+            style={styles.backButton}
+          >
+            <Icons.BackbuttonProfile width={45} height={45} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Thông tin cá nhân</Text>
+          <View style={{ width: 45 }} />
         </View>
 
-        <InputRow
-          label="Họ và tên"
-          value={formData.name}
-          onChangeText={text => handleInputChange('name', text)}
-          error={errors.name}
-          icon={<Icons.Name width={20} height={20} />}
-        />
-        <InputRow
-          label="Số điện thoại"
-          value={formData.phone}
-          onChangeText={text => handleInputChange('phone', text.replace(/\D/g, ''))}
-          error={errors.phone}
-          icon={<Icons.Phone width={20} height={20} />}
-          keyboardType="numeric"
-          maxLength={10}
-          editable={false}
-        />
-        <InputRow
-          label="Email"
-          value={formData.email}
-          onChangeText={text => handleInputChange('email', text)}
-          error={errors.email}
-          icon={<Icons.Email width={20} height={20} />}
-        />
-        <InputRow
-          label="Năm hoạt động"
-          value={formData.activeSince?.toString() || ''}
-          onChangeText={text => handleInputChange('activeSince', text)}
-          error={errors.activeSince}
-          icon={<Icons.DateTime width={20} height={20} />}
-          keyboardType="numeric"
-          maxLength={4}
-          placeholder="VD: 2023"
-        />
-
-        <Text style={styles.sectionTitle}>Ngân hàng</Text>
-        <TouchableOpacity style={styles.bankSelector} onPress={() => setShowBankModal(true)}>
-          <View style={styles.inputIconContainer}>
-            <Icons.Bank width={20} height={20} />
+        <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+          <View style={styles.avatarContainer}>
+            <Avatar />
           </View>
-          <Text style={[styles.bankSelectorText, !formData.bankName && styles.placeholderText]}>
-            {formData.bankName || 'Chọn ngân hàng'}
-          </Text>
-        </TouchableOpacity>
-        <InputRow
-          label="Số tài khoản"
-          value={formData.bankAccountNumber}
-          onChangeText={text => handleInputChange('bankAccountNumber', text)}
-          keyboardType="default"
-          icon={<Icons.STK width={20} height={20} />}
+
+          <InputRow
+            label="Họ và tên"
+            value={formData.name}
+            onChangeText={text => handleInputChange('name', text)}
+            error={errors.name}
+            icon={<Icons.Name width={20} height={20} />}
+          />
+          <InputRow
+            label="Số điện thoại"
+            value={formData.phone}
+            onChangeText={text => handleInputChange('phone', text.replace(/\D/g, ''))}
+            error={errors.phone}
+            icon={<Icons.Phone width={20} height={20} />}
+            keyboardType="numeric"
+            maxLength={10}
+            editable={false}
+          />
+          <InputRow
+            label="Email"
+            value={formData.email}
+            onChangeText={text => handleInputChange('email', text)}
+            error={errors.email}
+            icon={<Icons.Email width={20} height={20} />}
+          />
+          <InputRow
+            label="Năm hoạt động"
+            value={formData.activeSince?.toString() || ''}
+            onChangeText={text => handleInputChange('activeSince', text)}
+            error={errors.activeSince}
+            icon={<Icons.DateTime width={20} height={20} />}
+            keyboardType="numeric"
+            maxLength={4}
+            placeholder="VD: 2023"
+          />
+
+          <Text style={styles.sectionTitle}>Ngân hàng</Text>
+          <TouchableOpacity style={styles.bankSelector} onPress={() => setShowBankModal(true)}>
+            <View style={styles.inputIconContainer}>
+              <Icons.Bank width={20} height={20} />
+            </View>
+            <Text style={[styles.bankSelectorText, !formData.bankName && styles.placeholderText]}>
+              {formData.bankName || 'Chọn ngân hàng'}
+            </Text>
+          </TouchableOpacity>
+          <InputRow
+            label="Số tài khoản"
+            value={formData.bankAccountNumber}
+            onChangeText={text => handleInputChange('bankAccountNumber', text)}
+            keyboardType="default"
+            icon={<Icons.STK width={20} height={20} />}
+          />
+          <InputRow
+            label="Tên tài khoản"
+            value={formData.bankAccountName}
+            onFocus={() => setIsFocus(true)}
+            onBlur={() => setIsFocus(false)}
+            onChangeText={text => handleInputChange('bankAccountName', text.toUpperCase())}
+            icon={<Icons.Name width={20} height={20} />}
+          />
+
+          {isFocus && !!formData.bankAccountName && (
+            <Text style={{ marginTop: 6, fontSize: 12, color: 'red' }}>
+              *Thông tin tài khoản ngân hàng được cung cấp do khách hàng chịu trách nhiệm
+            </Text>
+          )}
+          {errors.bank && <Text style={styles.errorText}>{errors.bank}</Text>}
+
+          <Text style={styles.sectionTitle}>Giờ hoạt động</Text>
+          {validDays.map(day => {
+            console.log(`${day}:`, formData.operatingHours?.[day]); // Debug log
+            return (
+              <DayOperatingRow
+                key={day}
+                label={day.charAt(0).toUpperCase() + day.slice(1)}
+                value={formData.operatingHours?.[day] || { open: '', close: '' }}
+                onChange={(val: any) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    operatingHours: {
+                      ...(prev.operatingHours ?? {}),
+                      [day]: val,
+                    },
+                  }))
+                }
+              />
+            );
+          })}
+          {errors.operatingHours && <Text style={styles.errorText}>{errors.operatingHours}</Text>}
+
+          <TouchableOpacity
+            style={styles.updateButton}
+            onPress={() => setShowUpdateConfirm(true)}
+          >
+            <Text style={styles.updateButtonText}>Cập nhật</Text>
+          </TouchableOpacity>
+        </ScrollView>
+
+        <BankSelectionModal
+          isVisible={showBankModal}
+          onClose={() => setShowBankModal(false)}
+          selectedBankName={formData.bankName}
+          onSelectBank={bank => {
+            setFormData(prev => ({ ...prev, bankName: bank ? bank.name : '' }));
+          }}
         />
-        <InputRow
-          label="Tên tài khoản"
-          value={formData.bankAccountName}
-          onFocus={() => setIsFocus(true)}
-          onBlur={() => setIsFocus(false)}
-          onChangeText={text => handleInputChange('bankAccountName', text.toUpperCase())}
-          icon={<Icons.Name width={20} height={20} />}
+        <CancelModal
+          visible={showConfirmModal}
+          onClose={() => setShowConfirmModal(false)}
+          onContinue={() => {
+            setShowConfirmModal(false);
+            navigation.goBack();
+          }}
+          message="Thông tin chưa được lưu"
+          textBtn="Tiếp tục"
         />
-
-        {isFocus && !!formData.bankAccountName && (
-          <Text style={{ marginTop: 6, fontSize: 12, color: 'red' }}>
-            *Thông tin tài khoản ngân hàng được cung cấp do khách hàng chịu trách nhiệm
-          </Text>
-        )}
-        {errors.bank && <Text style={styles.errorText}>{errors.bank}</Text>}
-
-        <Text style={styles.sectionTitle}>Giờ hoạt động</Text>
-        {validDays.map(day => {
-          console.log(`${day}:`, formData.operatingHours?.[day]); // Debug log
-          return (
-            <DayOperatingRow
-              key={day}
-              label={day.charAt(0).toUpperCase() + day.slice(1)}
-              value={formData.operatingHours?.[day] || { open: '', close: '' }}
-              onChange={(val: any) =>
-                setFormData(prev => ({
-                  ...prev,
-                  operatingHours: {
-                    ...(prev.operatingHours ?? {}),
-                    [day]: val,
-                  },
-                }))
-              }
-            />
-          );
-        })}
-        {errors.operatingHours && <Text style={styles.errorText}>{errors.operatingHours}</Text>}
-
-        <TouchableOpacity
-          style={styles.updateButton}
-          onPress={() => setShowUpdateConfirm(true)}
-        >
-          <Text style={styles.updateButtonText}>Cập nhật</Text>
-        </TouchableOpacity>
-      </ScrollView>
-
-      <BankSelectionModal
-        isVisible={showBankModal}
-        onClose={() => setShowBankModal(false)}
-        selectedBankName={formData.bankName}
-        onSelectBank={bank => {
-          setFormData(prev => ({ ...prev, bankName: bank ? bank.name : '' }));
-        }}
-      />
-      <CancelModal
-        visible={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        onContinue={() => {
-          setShowConfirmModal(false);
-          navigation.goBack();
-        }}
-        message="Thông tin chưa được lưu"
-        textBtn="Tiếp tục"
-      />
-      <CancelModal
-        visible={showUpdateConfirm}
-        onClose={() => setShowUpdateConfirm(false)}
-        onContinue={() => {
-          setShowUpdateConfirm(false);
-          handleUpdate();
-        }}
-        message="Bạn có chắc chắn muốn cập nhật thông tin?"
-        textBtn="Xác nhận"
-      />
-      <SuccessModal
-        visible={showSuccessModal}
-        title="Thành công"
-        message="Cập nhật thông tin thành công"
-        onClose={() => {
-          setShowSuccessModal(false);
-          goBack();
-        }}
-      />
-    </View>
+        <CancelModal
+          visible={showUpdateConfirm}
+          onClose={() => setShowUpdateConfirm(false)}
+          onContinue={() => {
+            setShowUpdateConfirm(false);
+            handleUpdate();
+          }}
+          message="Bạn có chắc chắn muốn cập nhật thông tin?"
+          textBtn="Xác nhận"
+        />
+        <SuccessModal
+          visible={showSuccessModal}
+          title="Thành công"
+          message="Cập nhật thông tin thành công"
+          onClose={() => {
+            setShowSuccessModal(false);
+            goBack();
+          }}
+        />
+      </View>
+    </SafeAreaView>
   );
 };
 

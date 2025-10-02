@@ -15,7 +15,7 @@ import Toast from 'react-native-toast-message';
 import { Icons } from '../../assets';
 import { useUserStore } from '../../states/user';
 import SuccessModal from '../../components/SuccessModal';
-import { navigate } from '../../navigation/utils/navigationUtils';
+import { navigate, replace } from '../../navigation/utils/navigationUtils';
 
 type Props = {
   navigation: any;
@@ -196,11 +196,16 @@ const Otp: React.FC<Props> = ({ navigation, route }) => {
           style={sx.backBtn}
           onPress={() => {
             if (type === 'existed' && !name) {
-              // Nếu là quên mật khẩu → quay về Login
-              navigate('Login');
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              });
             }
             else if (!type) {
-              navigate('Login');
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              });
             } else if (type === 'existed' || type === 'not-existed') {
               // Mặc định quay lại SignUp và giữ lại các tham số cũ
               navigate('SignUp', {
@@ -291,7 +296,7 @@ const Otp: React.FC<Props> = ({ navigation, route }) => {
         visible={ok}
         onClose={() => {
           setOk(false);
-          navigationRef.navigate('Login');
+          navigate('Login');
         }}
         icon={<Icons.Success width={60} height={60} />}
         title="Đăng ký thành công"

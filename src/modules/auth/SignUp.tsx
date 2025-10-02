@@ -71,6 +71,8 @@ const SignUp = () => {
     if (!msg) return 'Có lỗi xảy ra, vui lòng thử lại';
     if (msg.includes('duplicate entry')) return 'Số điện thoại đã tồn tại';
     switch (msg) {
+      case '': return 'Mã giới thiệu không hợp lệ';
+      case 'phone must be a valid phone number': return 'Mã giới thiệu không hợp lệ';
       case 'phone_already_exists': return 'Số điện thoại đã tồn tại, vui lòng thực hiện đăng nhập';
       case 'phone_number_invalid': return 'Số điện thoại không hợp lệ';
       case 'referral_code_not_found': return 'Mã giới thiệu không hợp lệ';

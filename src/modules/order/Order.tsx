@@ -32,7 +32,7 @@ const OrderCard = ({ item }: { item: ShoeBooking }) => (
           <Icons.Shoe width={52} height={52} color={Colors.blue} />
         </View>
         <View style={styles.serviceDetails}>
-          <Text style={styles.serviceTitle} >{item.shoeService.name}</Text>
+          <Text style={styles.serviceTitle}>{item.shoeService.name}</Text>
           <Text style={styles.serviceLocation}>
             <Icons.Locationdetail /> {item.deliveryAddress}
           </Text>
@@ -67,9 +67,7 @@ const Orders = () => {
   const [filters, setFilters] = useState<{ status?: string; fromDate?: string; toDate?: string }>({});
   const [activeFilter, setActiveFilter] = useState('Tất cả');
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
-
   const [loadingMore, setLoadingMore] = useState(false);
-
 
   // gọi API
   const fetchOrders = useCallback(
@@ -96,8 +94,8 @@ const Orders = () => {
           pageNum === 1
             ? data
             : [...prev, ...data].filter(
-              (v, i, arr) => arr.findIndex(x => x.id === v.id) === i
-            )
+                (v, i, arr) => arr.findIndex(x => x.id === v.id) === i
+              )
         );
         setHasMore(pageNum * PAGE_SIZE < total);
         setPage(pageNum);
@@ -139,83 +137,92 @@ const Orders = () => {
   const filterTabs = ['Tất cả', 'Xe máy', 'Giao hàng', 'Limousine', 'Ô tô'];
 
   return (
-    <View style={[styles.container, { paddingTop: top }]}>
-      <StatusBar barStyle="dark-content" />
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={goBack}>
-          <Icons.Backbutton width={28} height={28} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Đơn hàng</Text>
-        <TouchableOpacity onPress={() => setIsSearchModalVisible(true)}>
-          <Icons.Moreoptions width={24} height={24} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Filter Tabs */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterContainer}
-      >
-        {filterTabs.map(tab => (
-          <TouchableOpacity
-            key={tab}
-            style={[styles.filterButton, activeFilter === tab && styles.activeFilterButton]}
-            onPress={() => setActiveFilter(tab)}
-          >
-            <Text style={[styles.filterText, activeFilter === tab && styles.activeFilterText]}>
-              {tab}
-            </Text>
+    <View style={styles.wrapper}>
+      <View style={[styles.container, { paddingTop: top }]}>
+        <StatusBar barStyle="dark-content" />
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={goBack}>
+            <Icons.Backbutton width={28} height={28} />
           </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      {!loading && !error && orders.length > 0 && (
-        <Text style={styles.listTitle}>Danh sách đơn hàng của bạn</Text>
-      )}
-
-
-      {/* Order List */}
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.blue} />
+          <Text style={styles.headerTitle}>Đơn hàng</Text>
+          <TouchableOpacity onPress={() => setIsSearchModalVisible(true)}>
+            <Icons.Moreoptions width={24} height={24} />
+          </TouchableOpacity>
         </View>
-      ) : error ? (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={orders}
-          renderItem={({ item }) => <OrderCard item={item} />}
-          keyExtractor={(item, index) => (item.id ? String(item.id) : `idx-${index}`)}
-          contentContainerStyle={styles.listContainer}
-          //ListHeaderComponent={<Text style={styles.listTitle}>Danh sách đơn hàng của bạn</Text>}
-          ListEmptyComponent={<Text style={styles.emptyText}>Không có đơn hàng nào.</Text>}
-          onEndReached={loadMore}
-          onEndReachedThreshold={0.3}
-          ListFooterComponent={
-            loadingMore ? <ActivityIndicator size="small" color={Colors.blue} /> : null
-          }
-          refreshing={refreshing}
-          onRefresh={onRefresh}
+
+        {/* Filter Tabs */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterContainer}
+        >
+          {filterTabs.map(tab => (
+            <TouchableOpacity
+              key={tab}
+              style={[styles.filterButton, activeFilter === tab && styles.activeFilterButton]}
+              onPress={() => setActiveFilter(tab)}
+            >
+              <Text style={[styles.filterText, activeFilter === tab && styles.activeFilterText]}>
+                {tab}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* List Title */}
+        {orders.length > 0 && (
+          <View style={styles.titleContainer}>
+            <Text style={styles.listTitle}>Danh sách đơn hàng của bạn</Text>
+          </View>
+        )}
+
+        {/* Order List */}
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={Colors.blue} />
+          </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={orders}
+            renderItem={({ item }) => <OrderCard item={item} />}
+            keyExtractor={(item, index) => (item.id ? String(item.id) : `idx-${index}`)}
+            contentContainerStyle={styles.listContainer}
+            ListEmptyComponent={<Text style={styles.emptyText}>Không có đơn hàng nào.</Text>}
+            onEndReached={loadMore}
+            onEndReachedThreshold={0.3}
+            ListFooterComponent={
+              loadingMore ? <ActivityIndicator size="small" color={Colors.blue} /> : null
+            }
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        )}
+
+        <ModalOrderSearch
+          isVisible={isSearchModalVisible}
+          onClose={() => setIsSearchModalVisible(false)}
+          onSearch={handleSearch}
+          title="Tìm kiếm đơn hàng"
+          statusLabels={ORDER_STATUS_LABELS}
         />
-      )}
-
-      <ModalOrderSearch
-        isVisible={isSearchModalVisible}
-        onClose={() => setIsSearchModalVisible(false)}
-        onSearch={handleSearch}
-        title="Tìm kiếm đơn hàng"
-        statusLabels={ORDER_STATUS_LABELS}
-      />
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  wrapper: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  container: {
+    backgroundColor: Colors.background,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -237,10 +244,32 @@ const styles = StyleSheet.create({
   activeFilterButton: { backgroundColor: Colors.blue },
   filterText: { fontSize: 14, color: '#3C3C43' },
   activeFilterText: { color: 'white', fontWeight: '600' },
-  listContainer: { padding: 16 },
-  listTitle: { fontSize: 18, fontWeight: '600', color: '#1C1C1E', marginBottom: 16, paddingHorizontal: 16, paddingTop: 10 },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  titleContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 16,
+  },
+  listContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  listTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1C1C1E',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+  },
   errorText: { fontSize: 16, color: '#FF3B30' },
   emptyText: { fontSize: 16, color: '#8E8E93', textAlign: 'center', marginTop: 20 },
   card: {

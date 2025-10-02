@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
-  SafeAreaView,
   Dimensions,
 } from 'react-native';
 import { Icons } from '../../assets';
@@ -24,6 +23,7 @@ import { useRejectShoeBooking } from '../../services/shoe';
 import CancelModal from '../../components/CancelModal';
 import ViewImageModal from '../../components/ViewImageModal';
 import { scale } from '../../ultils';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type Props = {
   route: RouteProp<{
@@ -79,7 +79,7 @@ const AcceptDetail = ({ route }: Props) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <Header title="Chi tiết đơn hàng" />
 
       {/* Order Timing and Details */}

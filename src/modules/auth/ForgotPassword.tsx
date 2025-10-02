@@ -92,7 +92,7 @@ const ForgotPassword = () => {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <SafeAreaView style={[sx.wrap, styles.container]}>
             <View style={styles.header}>
-              <TouchableOpacity onPress={() => replace('Login')} style={styles.backButton}>
+              <TouchableOpacity onPress={() => replace('AuthStack', {screen: 'Login'})} style={styles.backButton}>
                 {Icons.BackbuttonProfile ? (
                   <Icons.BackbuttonProfile width={45} height={45} />
                 ) : (

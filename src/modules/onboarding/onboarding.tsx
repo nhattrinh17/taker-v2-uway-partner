@@ -8,6 +8,7 @@ import { appStore } from '../../states/app';
 import DotIndicator from '../../components/DotIndicator';
 import { Images } from '../../assets/Images';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { scale } from '../../ultils';
 
 const { width, height } = Dimensions.get('window');
 const HERO_HEIGHT = Math.min(height * 0.58, 420);

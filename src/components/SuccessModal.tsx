@@ -18,14 +18,16 @@ type SuccessModalProps = {
   visible: boolean;
   title?: string;
   message?: string;
-  icon?: React.ReactNode;                 // ví dụ: <icons.Success width={80} height={80} />
-  autoCloseMs?: number;                   // tự đóng sau X ms (tuỳ chọn)
-  onClose?: () => void;                   // đóng khi bấm ra ngoài / tự đóng
-  primaryText?: string;                   // nếu muốn thêm nút OK
+  icon?: React.ReactNode;
+  autoCloseMs?: number;
+  onClose?: () => void;
+  primaryText?: string;
   onPrimaryPress?: () => void;
-  footerText?: string;                    // ví dụ: "Bạn chưa nhận được mã ?"
+  footerText?: string;
   onPress?: () => void;
   onContinue?: () => void;
+  onSecondaryPress?: () => void;
+  secondaryText?: string;
 };
 
 export default function SuccessModal({
@@ -39,6 +41,8 @@ export default function SuccessModal({
   onPrimaryPress,
   onPress,
   onContinue,
+  onSecondaryPress,
+  secondaryText,
 }: SuccessModalProps) {
   const fade = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.92)).current;
@@ -65,8 +69,13 @@ export default function SuccessModal({
 
   const dots = useMemo(
     () =>
-      [ {top:18,left:34,size:6}, {top:10,right:32,size:5}, {bottom:16,left:28,size:5},
-        {bottom:24,right:36,size:6}, {top:30,right:78,size:4} ],
+      [
+        { top: 18, left: 34, size: 6 },
+        { top: 10, right: 32, size: 5 },
+        { bottom: 16, left: 28, size: 5 },
+        { bottom: 24, right: 36, size: 6 },
+        { top: 30, right: 78, size: 4 },
+      ],
     []
   );
 
@@ -74,31 +83,36 @@ export default function SuccessModal({
     <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
       <Pressable style={sx.backdrop} onPress={onClose}>
         <Animated.View style={[sx.cardWrap, { opacity: fade, transform: [{ scale }] }]}>
-          {/* Dots trang trí */}
           {dots.map((d, i) => (
             <View key={i} style={[sx.dot, d as any, { width: d.size, height: d.size, borderRadius: d.size }]} />
           ))}
-
           <View style={sx.card}>
-            {/* Icon */}
-            <View style={sx.iconWrap}>{icon || <Icons.SuccessIcon width={160} height={120} />}</View>
-            {/* Title */}
+            <View style={sx.iconWrap}>{icon || <Icons.Success width={160} height={120} />}</View>
             <Text style={sx.title}>{title}</Text>
-            {/* Message */}
             {message ? <Text style={sx.message}>{message}</Text> : null}
-
-            {/* Optional primary button */}
-            {primaryText ? (
-              <TouchableOpacity
-                style={sx.primaryBtn}
-                onPress={onPrimaryPress}
-                activeOpacity={0.9}
-              >
-                <Text style={sx.primaryBtnText}>{primaryText}</Text>
-              </TouchableOpacity>
-            ) : null}
+            {(primaryText || secondaryText) && (
+              <View style={sx.buttonContainer}>
+                {secondaryText && (
+                  <TouchableOpacity
+                    style={sx.secondaryBtn}
+                    onPress={onSecondaryPress}
+                    activeOpacity={0.9}
+                  >
+                    <Text style={sx.secondaryBtnText}>{secondaryText}</Text>
+                  </TouchableOpacity>
+                )}
+                {primaryText && (
+                  <TouchableOpacity
+                    style={sx.primaryBtn}
+                    onPress={onPrimaryPress}
+                    activeOpacity={0.9}
+                  >
+                    <Text style={sx.primaryBtnText}>{primaryText}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
           </View>
-          
         </Animated.View>
       </Pressable>
     </Modal>
@@ -149,9 +163,16 @@ const sx = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-  primaryBtn: {
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginTop: 16,
-    minWidth: 160,
+    gap: 12,
+    width: '100%',
+  },
+  primaryBtn: {
+    flex: 1, // Equal width for both buttons
     height: 44,
     borderRadius: 22,
     backgroundColor: Colors.blue,
@@ -163,6 +184,24 @@ const sx = StyleSheet.create({
     color: Colors.white,
     fontFamily: Fonts.fontFamily.LexendSemiBold,
     fontSize: 15,
+    textAlign: 'center',
+  },
+  secondaryBtn: {
+    flex: 1, // Equal width for both buttons
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.blue,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  secondaryBtnText: {
+    color: Colors.blue,
+    fontFamily: Fonts.fontFamily.LexendSemiBold,
+    fontSize: 15,
+    textAlign: 'center',
   },
   dot: {
     position: 'absolute',

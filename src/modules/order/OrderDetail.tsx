@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
-  SafeAreaView,
   Dimensions,
   ScrollView,
   ActionSheetIOS,
@@ -45,6 +44,7 @@ import ViewImageModal from '../../components/ViewImageModal';
 import { PermissionsAndroid } from 'react-native';
 import FailureModal from '../../components/FailureModal';
 import { scale } from '../../ultils';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type OrderDetailScreenRouteProp = RouteProp<RootNavigatorParamList, 'OrderDetail'>;
 
@@ -351,7 +351,7 @@ const OrderDetail = ({ route }: Props) => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <Header title="Chi tiết đơn hàng" />
 
       <ScrollView

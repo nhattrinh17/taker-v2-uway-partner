@@ -54,6 +54,7 @@ const Avatar = () => {
           }
         }
       } catch (error) {
+        console.log('==>Log:',error);
         Alert.alert('Upload Error', 'Failed to process the image. Please try again.');
       } finally {
         setLoading(false);

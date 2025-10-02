@@ -4,6 +4,12 @@ import { Fonts } from '../../assets/Fonts';
 
 export const sx = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.background },
+  scrollView: {
+    flex: 1, // Added
+  },
+  scrollContent: {
+    flexGrow: 1, // Ensure ScrollView content can grow
+  },
   wrap: { flex: 1, paddingHorizontal: 20, paddingTop: 25 },
   logo: { alignSelf: 'center', width: 130, height: 62, resizeMode: 'contain', marginTop: 14, marginBottom: 10 },
 
