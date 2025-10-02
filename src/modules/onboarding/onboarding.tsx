@@ -1,12 +1,13 @@
 import React, { useRef, useState } from 'react';
 import {
   Dimensions, FlatList, Image, ImageBackground,
-  Pressable, SafeAreaView, StyleSheet, Text, View,
+  Pressable, StyleSheet, Text, View,
   Platform, ImageStyle, ViewStyle, TextStyle,
 } from 'react-native';
 import { appStore } from '../../states/app';
 import DotIndicator from '../../components/DotIndicator';
 import { Images } from '../../assets/Images';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 const HERO_HEIGHT = Math.min(height * 0.58, 420);

@@ -24,12 +24,13 @@ interface ModalOrderSearchProps {
 
 const ModalOrderSearch = ({ isVisible, onClose, onSearch, title, statusLabels }: ModalOrderSearchProps) => {
   const { top } = useSafeAreaInsets();
-  const [status, setStatus] = useState<string>(''); 
+  const [status, setStatus] = useState<string>('');
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
   const [openPicker, setOpenPicker] = useState<null | 'start' | 'end'>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
-  const [isFromDateInvalid, setIsFromDateInvalid] = useState(false); // State để kiểm tra fromDate
+
+  const [errorMessage, setErrorMessage] = useState<string>(''); // lỗi hiển thị
 
   const statusKeys = Object.keys(statusLabels);
 
@@ -57,27 +58,48 @@ const ModalOrderSearch = ({ isVisible, onClose, onSearch, title, statusLabels }:
     setStatus('');
     setFromDate(null);
     setToDate(null);
-    setIsFromDateInvalid(false); // Reset lỗi khi đóng
+    setErrorMessage('');
     setShowStatusModal(false);
     onClose();
   };
 
   const handleSearch = () => {
-    if (isFromDateInvalid) return; // Ngăn tìm kiếm nếu fromDate không hợp lệ
+    if (errorMessage) return; // Nếu có lỗi thì không search
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+
+    const finalToDate = toDate || today;
+
+    if (fromDate && fromDate > finalToDate) {
+      setErrorMessage('Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc');
+      return;
+    }
+
     onSearch({
       status,
-      fromDate: fromDate ? new Date(fromDate.setHours(0, 0, 0, 0)).toISOString() : '',
-      toDate: toDate ? new Date(toDate.setHours(23, 59, 59, 999)).toISOString() : '',
+      fromDate: fromDate
+        ? new Date(fromDate.setHours(0, 0, 0, 0)).toISOString()
+        : '',
+      toDate: new Date(finalToDate.setHours(23, 59, 59, 999)).toISOString(),
     });
     handleClose();
   };
 
   const handleFromDateConfirm = (date: Date) => {
     const today = new Date();
-    today.setHours(23, 59, 59, 999); // Đặt thời gian cuối ngày hiện tại
-    const isInvalid = date > today; // Kiểm tra nếu ngày chọn lớn hơn ngày hiện tại
-    setIsFromDateInvalid(isInvalid);
-    setFromDate(prev => (prev && prev.toDateString() === date.toDateString() ? null : date));
+    today.setHours(23, 59, 59, 999);
+
+    if (date > today) {
+      setErrorMessage('Ngày bắt đầu không được lớn hơn ngày hiện tại');
+    } else if (toDate && date > toDate) {
+      setErrorMessage('Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc');
+    } else {
+      setErrorMessage('');
+    }
+
+    setFromDate(prev =>
+      prev && prev.toDateString() === date.toDateString() ? null : date
+    );
     setOpenPicker(null);
   };
 
@@ -114,9 +136,9 @@ const ModalOrderSearch = ({ isVisible, onClose, onSearch, title, statusLabels }:
                 </Text>
               </View>
             </TouchableOpacity>
-            {isFromDateInvalid && (
-              <Text style={styles.errorText}>Ngày bắt đầu không được lớn hơn ngày hiện tại</Text>
-            )}
+            {errorMessage ? (
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            ) : null}
             <View style={styles.divider} />
             <TouchableOpacity style={styles.dateItem} onPress={() => setOpenPicker('end')}>
               <Icons.Date width={40} height={40} color={Colors.blue} />
@@ -131,9 +153,9 @@ const ModalOrderSearch = ({ isVisible, onClose, onSearch, title, statusLabels }:
 
           {/* Search button */}
           <TouchableOpacity
-            style={[styles.searchButton, isFromDateInvalid && styles.searchButtonDisabled]}
+            style={[styles.searchButton, errorMessage && styles.searchButtonDisabled]}
             onPress={handleSearch}
-            disabled={isFromDateInvalid}
+            disabled={!!errorMessage}
           >
             <Text style={styles.searchText}>Tìm kiếm</Text>
           </TouchableOpacity>

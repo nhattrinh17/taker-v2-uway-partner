@@ -127,7 +127,7 @@ const Login = () => {
         await AsyncStorage.removeItem('savedPhone');
         await AsyncStorage.removeItem('savedPassword');
       }
-      setOk(true);
+  
       console.log('🚀 ~ Login ~ res:', res);
       setToken(res.data.accessToken);
       setUser(res.data.user);
@@ -135,7 +135,6 @@ const Login = () => {
       setOk(true);
     } catch (e: any) {
       console.log('==>', e.data.message);
-
       switch (e?.data?.message) {
         case 'phone_or_password_wrong': setError('Sai số điện thoại hoặc mật khẩu'); break;
         case '{"message":"phone_already_exists_or_not_match","step":"COMPLETED","status":"BLOCKED"}':

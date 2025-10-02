@@ -52,7 +52,7 @@ export default function MainStack() {
   }, [token]);
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
+    <SafeAreaView style={{ flex: 1 }} edges={[]}>
       <StatusBar translucent barStyle="dark-content" backgroundColor={Colors.transparent} />
       <Stack.Navigator
         screenOptions={{ headerShown: false }}

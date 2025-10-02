@@ -12,6 +12,7 @@ import { useWithdrawWallet, useGetWalletAccessCode } from '../../services/wallet
 import SuccessModal from '../../components/SuccessModal';
 import { RootNavigatorParamList } from '../../navigation/typings';
 import FailureModal from '../../components/FailureModal';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MINUTES = 15;
@@ -56,7 +57,7 @@ const Withdraw = (props: Props) => {
   const [lastFailTime, setLastFailTime] = useState<number | null>(null);
   const transactionFee = 0; // Phí này nên được lấy từ API
   const totalAmount = amount + transactionFee;
-  
+
 
   const now = () => Date.now();
   const formatCurrency = (value: number) => {
@@ -87,14 +88,14 @@ const Withdraw = (props: Props) => {
       setInfoModalVisible(true);
       return;
     }
-    if (amount < 5000 || amount > 10000000) {
-        setInfoModalConfig({
-          title: 'Thông báo',
-          message: 'Số tiền rút phải từ 5.000đ đến 10.000.000đ',
-        });
-        setInfoModalVisible(true);
-        return;
-      }
+    if (amount < 50000 || amount > 10000000) {
+      setInfoModalConfig({
+        title: 'Thông báo',
+        message: 'Số tiền rút phải từ 50.000đ đến 10.000.000đ',
+      });
+      setInfoModalVisible(true);
+      return;
+    }
     if (totalAmount > balance) {
       setInfoModalConfig({ title: "Không đủ số dư", message: `Số dư trong ví của bạn không đủ để thực hiện giao dịch này. Bạn cần ${formatCurrency(totalAmount)}đ.` });
       setInfoModalVisible(true);
@@ -105,204 +106,196 @@ const Withdraw = (props: Props) => {
   };
 
   const checkLockout = () => {
-  // Kiểm tra nếu ví đang bị khóa
-  if (walletLockoutUntil && Date.now() < walletLockoutUntil) {
-    const remainingMs = walletLockoutUntil - Date.now();
-    const remainingMinutes = Math.ceil(remainingMs / 60000);
-    setInfoModalConfig({
-      title: 'Ví đã bị khóa',
-      message: `Bạn đã nhập sai mật khẩu quá nhiều lần. Vui lòng thử lại sau ${remainingMinutes} phút.`,
-    });
-    setInfoModalVisible(true);
-    return true; // Bị khóa
-  }
+    // Kiểm tra nếu ví đang bị khóa
+    if (walletLockoutUntil && Date.now() < walletLockoutUntil) {
+      const remainingMs = walletLockoutUntil - Date.now();
+      const remainingMinutes = Math.ceil(remainingMs / 60000);
+      setInfoModalConfig({
+        title: 'Ví đã bị khóa',
+        message: `Bạn đã nhập sai mật khẩu quá nhiều lần. Vui lòng thử lại sau ${remainingMinutes} phút.`,
+      });
+      setInfoModalVisible(true);
+      return true; // Bị khóa
+    }
 
-  // Kiểm tra nếu đã quá 30 phút từ lần nhập sai gần nhất
-  if (lastFailedAttempt && Date.now() - lastFailedAttempt > RESET_TIMEOUT_MS) {
-    console.log('[Withdraw] 🔄 Reset failedAttempts vì đã quá 30 phút kể từ lần nhập sai gần nhất.');
-    resetFailedAttempts();
-  }
+    // Kiểm tra nếu đã quá 30 phút từ lần nhập sai gần nhất
+    if (lastFailedAttempt && Date.now() - lastFailedAttempt > RESET_TIMEOUT_MS) {
+      console.log('[Withdraw] 🔄 Reset failedAttempts vì đã quá 30 phút kể từ lần nhập sai gần nhất.');
+      resetFailedAttempts();
+    }
 
-  return false; // Không bị khóa
-};
+    return false; // Không bị khóa
+  };
 
   // SỬA ĐỔI: Hoàn thiện logic gọi API sau khi xác nhận mật khẩu
   const handleConfirmPassword = async (password: string) => {
-  setPasswordModalVisible(false);
-  setIsLoading(true);
-  try {
-    const accessCodeRes = await triggerGetWalletAccessCode({ password });
-    const accessCode = accessCodeRes.data;
+    setPasswordModalVisible(false);
+    setIsLoading(true);
+    try {
+      const accessCodeRes = await triggerGetWalletAccessCode({ password });
+      const accessCode = accessCodeRes.data;
 
-    if (!accessCode) {
-      throw new Error('Không thể lấy mã truy cập.');
-    }
-
-    // Mật khẩu đúng, reset số lần thử sai
-    resetFailedAttempts();
-
-    await triggerWithdrawWallet({
-      amount: amount,
-      accessCode: accessCode,
-    });
-
-    setSuccessModalVisible(true);
-  } catch (error: any) {
-    console.log('Lỗi rút tiền:', error);
-    const isIncorrectPassword = error?.data?.message === 'Internal Server Error' || 'password_invalid';
-    let errorMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại sau.';
-
-    if (isIncorrectPassword) {
-      // Cập nhật thời điểm nhập sai
-      setLastFailedAttempt();
-      incrementFailedAttempts();
-      const nextAttempts = failedAttempts + 1;
-
-      if (nextAttempts >= MAX_FAILED_ATTEMPTS) {
-        setWalletLockout(LOCKOUT_DURATION_MS);
-        errorMessage = `Bạn đã nhập sai mật khẩu ${nextAttempts} lần. Ví của bạn đã bị khóa trong ${LOCKOUT_DURATION_MINUTES} phút.`;
-      } else {
-        errorMessage = `Mật khẩu không chính xác. Bạn còn ${MAX_FAILED_ATTEMPTS - nextAttempts} lần thử.`;
+      if (!accessCode) {
+        throw new Error('Không thể lấy mã truy cập.');
       }
+
+      // Mật khẩu đúng, reset số lần thử sai
+      resetFailedAttempts();
+
+      await triggerWithdrawWallet({
+        amount: amount,
+        accessCode: accessCode,
+      });
+
+      setSuccessModalVisible(true);
+    } catch (error: any) {
+      console.log('Lỗi rút tiền:', error);
+      const isIncorrectPassword = error?.data?.message === 'Internal Server Error' || 'password_invalid';
+      let errorMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại sau.';
+
+      if (isIncorrectPassword) {
+        // Cập nhật thời điểm nhập sai
+        setLastFailedAttempt();
+        incrementFailedAttempts();
+        const nextAttempts = failedAttempts + 1;
+
+        if (nextAttempts >= MAX_FAILED_ATTEMPTS) {
+          setWalletLockout(LOCKOUT_DURATION_MS);
+          errorMessage = `Bạn đã nhập sai mật khẩu ${nextAttempts} lần. Ví của bạn đã bị khóa trong ${LOCKOUT_DURATION_MINUTES} phút.`;
+        } else {
+          errorMessage = `Mật khẩu không chính xác. Bạn còn ${MAX_FAILED_ATTEMPTS - nextAttempts} lần thử.`;
+        }
+      }
+      if (error.data.message) {
+        errorMessage = error.data.message;
+      }
+      setInfoModalConfig({ title: 'Rút tiền thất bại', message: errorMessage });
+      setInfoModalVisible(true);
+    } finally {
+      setIsLoading(false);
     }
-    if(error.data.message){
-      errorMessage = error.data.message;
-    }
-    setInfoModalConfig({ title: 'Rút tiền thất bại', message: errorMessage });
-    setInfoModalVisible(true);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   return (
-    <View style={[styles.container, { paddingTop: top }]}>
-      <StatusBar barStyle="dark-content" />
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+      <View style={[styles.container, { paddingTop: top }]}>
+        <StatusBar barStyle="dark-content" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icons.Backbutton width={27} height={27} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Rút tiền</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* SỬA ĐỔI: Hiển thị thông tin tài khoản từ user store */}
-        <Text style={styles.cardTitle}>Tài khoản hưởng thụ</Text>
-        <View style={styles.card}>
-          <InfoRow label="Chủ tài khoản:" value={user?.bankAccountName || 'Chưa cập nhật'} />
-          <InfoRow label="Số tài khoản:" value={user?.bankAccountNumber || 'Chưa cập nhật'} />
-          <InfoRow label="Ngân hàng:" value={user?.bankName || 'Chưa cập nhật'} isLast />
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Icons.Backbutton width={27} height={27} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Rút tiền</Text>
+          <View style={{ width: 24 }} />
         </View>
-    {isBankInfoMissing && (
-          <Text style={styles.warningText}>
-            Vui lòng cập nhật thêm thông tin tài khoản thụ hưởng trước khi rút tiền.
-          </Text>
-        )}
-        {/* Nhập số tiền */}
-        <Text style={styles.inputLabel}>Nhập số tiền (VNĐ)</Text>
-        <TextInput
-          style={styles.amountInput}
-          value={formatCurrency(amount)}
-          onChangeText={(text) => {
-            // Chỉ giữ lại chữ số
-            const numeric = text.replace(/\D/g, '');
-            setAmount(numeric === '' ? 0 : parseInt(numeric, 10));
-          }}
-          keyboardType="numeric"
-        />
 
-        {/* Các mức tiền gợi ý */}
-        <Text style={styles.inputLabel}>Số tiền rút (VNĐ)</Text>
-        <View style={styles.presetCard}>
-          <View style={styles.presetGrid}>
-            {presetAmounts.map((preset) => (
-              <TouchableOpacity
-                key={preset}
-                style={[
-                  styles.presetButton,
-                  amount === preset && styles.presetButtonSelected,
-                ]}
-                onPress={() => setAmount(preset)}
-              >
-                <Text
-                  style={[
-                    styles.presetButtonText,
-                    amount === preset && styles.presetButtonTextSelected,
-                  ]}
-                >
-                  {formatCurrency(preset)}
-                </Text>
-              </TouchableOpacity>
-            ))}
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          {/* SỬA ĐỔI: Hiển thị thông tin tài khoản từ user store */}
+          <Text style={styles.cardTitle}>Tài khoản hưởng thụ</Text>
+          <View style={styles.card}>
+            <InfoRow label="Chủ tài khoản:" value={user?.bankAccountName || 'Chưa cập nhật'} />
+            <InfoRow label="Số tài khoản:" value={user?.bankAccountNumber || 'Chưa cập nhật'} />
+            <InfoRow label="Ngân hàng:" value={user?.bankName || 'Chưa cập nhật'} isLast />
           </View>
+          {isBankInfoMissing && (
+            <Text style={styles.warningText}>
+              Vui lòng cập nhật thêm thông tin tài khoản thụ hưởng trước khi rút tiền.
+            </Text>
+          )}
+          {/* Nhập số tiền */}
+          <Text style={styles.inputLabel}>Nhập số tiền (VNĐ)</Text>
+          <TextInput
+            style={styles.amountInput}
+            value={formatCurrency(amount)}
+            onChangeText={(text) => {
+              // Chỉ giữ lại chữ số
+              const numeric = text.replace(/\D/g, '');
+              setAmount(numeric === '' ? 0 : parseInt(numeric, 10));
+            }}
+            keyboardType="numeric"
+          />
+
+          {/* Các mức tiền gợi ý */}
+          <Text style={styles.inputLabel}>Số tiền rút (VNĐ)</Text>
+          <View style={styles.presetCard}>
+            <View style={styles.presetGrid}>
+              {presetAmounts.map((preset) => (
+                <TouchableOpacity
+                  key={preset}
+                  style={[
+                    styles.presetButton,
+                    amount === preset && styles.presetButtonSelected,
+                  ]}
+                  onPress={() => setAmount(preset)}
+                >
+                  <Text
+                    style={[
+                      styles.presetButtonText,
+                      amount === preset && styles.presetButtonTextSelected,
+                    ]}
+                  >
+                    {formatCurrency(preset)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Thẻ tóm tắt */}
+          <View style={styles.summaryCard}>
+            <SummaryRow label="Số tiền rút:" value={`${formatCurrency(amount)}đ`} />
+            <SummaryRow label="Phí giao dịch:" value={`${formatCurrency(transactionFee)}đ`} />
+            <SummaryRow label="Tổng thanh toán:" value={`${formatCurrency(totalAmount)}đ`} isTotal isLast />
+          </View>
+
+        </ScrollView>
+
+        {/* Nút Tiếp tục */}
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={[
+              styles.continueButton,
+              (isLoading || isBankInfoMissing || (lockUntil && Date.now() < lockUntil))
+                ? styles.continueButtonDisabled
+                : undefined
+            ]}
+            onPress={handleWithdrawPress}
+            disabled={!!(isLoading || isBankInfoMissing || (lockUntil && Date.now() < lockUntil))}
+          >
+            {isLoading
+              ? <ActivityIndicator color="white" />
+              : <Text style={styles.continueButtonText}>Tiếp tục</Text>}
+          </TouchableOpacity>
+
         </View>
 
-        {/* Thẻ tóm tắt */}
-        <View style={styles.summaryCard}>
-          <SummaryRow label="Số tiền rút:" value={`${formatCurrency(amount)}đ`} />
-          <SummaryRow label="Phí giao dịch:" value={`${formatCurrency(transactionFee)}đ`} />
-          <SummaryRow label="Tổng thanh toán:" value={`${formatCurrency(totalAmount)}đ`} isTotal isLast />
-        </View>
-
-        {/* Nội dung */}
-        <Text style={styles.inputLabel}>Nội dung</Text>
-        <TextInput
-          style={styles.noteInput}
-          placeholder="Nội dung tin nhắn..."
-          placeholderTextColor="#999"
-          value={note}
-          onChangeText={setNote}
-          multiline
+        <WalletPasswordModal
+          isVisible={isPasswordModalVisible}
+          onClose={() => setPasswordModalVisible(false)}
+          onConfirm={handleConfirmPassword}
         />
-      </ScrollView>
+        <InfoModal
+          visible={isInfoModalVisible}
+          onClose={() => setInfoModalVisible(false)}
+          title={infoModalConfig.title}
+          message={infoModalConfig.message}
+          primaryText="Đã hiểu"
+        />
 
-      {/* Nút Tiếp tục */}
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[
-            styles.continueButton,
-            (isLoading || isBankInfoMissing || (lockUntil && Date.now() < lockUntil))
-              ? styles.continueButtonDisabled
-              : undefined
-          ]}
-          onPress={handleWithdrawPress}
-          disabled={!!(isLoading|| isBankInfoMissing || (lockUntil && Date.now() < lockUntil))}
-        >
-          {isLoading
-            ? <ActivityIndicator color="white" />
-            : <Text style={styles.continueButtonText}>Tiếp tục</Text>}
-        </TouchableOpacity>
-
+        <SuccessModal
+          visible={isSuccessModalVisible}
+          onClose={() => {
+            setSuccessModalVisible(false);
+            navigation.goBack();
+          }}
+          title="Yêu cầu thành công"
+          message="Yêu cầu rút tiền của bạn đã được gửi đi và đang chờ xử lý."
+          icon={<Icons.Success width={60} height={60} />}
+          autoCloseMs={2000}
+        />
       </View>
-
-      <WalletPasswordModal
-        isVisible={isPasswordModalVisible}
-        onClose={() => setPasswordModalVisible(false)}
-        onConfirm={handleConfirmPassword}
-      />
-      <InfoModal
-        visible={isInfoModalVisible}
-        onClose={() => setInfoModalVisible(false)}
-        title={infoModalConfig.title}
-        message={infoModalConfig.message}
-        primaryText="Đã hiểu"
-      />
-
-      <SuccessModal
-        visible={isSuccessModalVisible}
-        onClose={() => {
-          setSuccessModalVisible(false);
-          navigation.goBack();
-        }}
-        title="Yêu cầu thành công"
-        message="Yêu cầu rút tiền của bạn đã được gửi đi và đang chờ xử lý."
-        icon={<Icons.Success width={60} height={60} />}
-        autoCloseMs={2000}
-      />
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -341,10 +334,10 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   warningText: {
-  color: 'red',
-  fontSize: 14,
-  marginBottom: 16,
-},
+    color: 'red',
+    fontSize: 14,
+    marginBottom: 16,
+  },
   cardTitle: {
     fontSize: 16,
     fontWeight: '600',

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Colors } from '../assets/Colors';
 import { Fonts } from '../assets/Fonts';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type Props = {
   visible: boolean;
@@ -55,6 +56,7 @@ export default function ConfirmActionSheet({
 
   return (
     <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
+      <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
       <Pressable style={sx.backdrop} onPress={onClose}>
         <Animated.View style={[sx.sheetWrap, { opacity: fade, transform: [{ translateY }] }]}>
           <View style={sx.sheet}>
@@ -72,6 +74,7 @@ export default function ConfirmActionSheet({
           </View>
         </Animated.View>
       </Pressable>
+      </SafeAreaView>
     </Modal>
   );
 }

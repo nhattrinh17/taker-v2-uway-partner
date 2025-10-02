@@ -7,7 +7,7 @@ export interface userInfo {
   avatar?: string | null; // Cập nhật: API có thể trả về null
   dateOfBirth?: string | null;
 
-  operatingHours: OperatingHours;
+  operatingHours: IOperatingHours;
   type?: string;
  
 
@@ -42,12 +42,17 @@ export interface userInfo {
   deletedAt?: string | null;
 }
 
-export interface OperatingHours {
-  monday: string | null;
-  tuesday: string | null;
-  wednesday: string | null;
-  thursday: string | null;
-  friday: string | null;
-  saturday: string | null;
-  sunday: string | null;
+export interface IDayOperatingHours {
+  open: string; // 'HH:mm'
+  close: string; // 'HH:mm'
+}
+
+export interface IOperatingHours {
+  monday?: IDayOperatingHours | null;
+  tuesday?: IDayOperatingHours | null;
+  wednesday?: IDayOperatingHours | null;
+  thursday?: IDayOperatingHours | null;
+  friday?: IDayOperatingHours | null;
+  saturday?: IDayOperatingHours | null;
+  sunday?: IDayOperatingHours | null;
 }

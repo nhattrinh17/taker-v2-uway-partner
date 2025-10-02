@@ -17,7 +17,8 @@ import { Icons } from '../../assets';
 import { useCreateAddress, useUpdateAddress, useGetAddress } from '../../services/address';
 import { GOONG_API_KEY } from '../../services/APIConfig';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {  isValidPhone } from '../../ultils/validation';
+import { isValidPhone } from '../../ultils/validation';
+import SuccessModal from '../../components/SuccessModal';
 
 // ====== AddressForm Component ======
 type AddressFormParams = {
@@ -58,12 +59,11 @@ const AddressForm = () => {
   const [results, setResults] = useState<any[]>([]);
   const [apiError, setApiError] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false); // New state for SuccessModal
   const [hasAnyAddress, setHasAnyAddress] = useState(false);
-
-  const [addressesCount, setAddressesCount] = useState<number | null>(null); // null = unknown yet
+  const [addressesCount, setAddressesCount] = useState<number | null>(null);
   const [disableToggle, setDisableToggle] = useState(false);
   const [hasHeadquarters, setHasHeadquarters] = useState(false);
-
 
   useEffect(() => {
     let mounted = true;
@@ -71,16 +71,12 @@ const AddressForm = () => {
       try {
         const res = await triggerGetAddress();
         console.log('[AddressForm] Existing addresses:', res);
-        // triggerGetAddress might return array or an object with data
         const list = Array.isArray(res) ? res : (res?.data.data ?? res ?? []);
         const count = Array.isArray(list) ? list.length : 0;
         console.log('[AddressForm] Existing addresses count:', count, list);
         if (!mounted) return;
         setAddressesCount(count);
 
-
-        // If we're creating a new address and there are no addresses yet,
-        // the new one must be the default. Keep toggles visible but locked.
         if (!isEditing) {
           if (count === 0) {
             setIsDefault(true);
@@ -90,7 +86,6 @@ const AddressForm = () => {
             setDisableToggle(false);
           }
         } else {
-          // editing: if this is the only address and it's default, prevent unchecking/deleting
           if (initialData?.isDefault && count === 1) {
             setDisableToggle(true);
           } else {
@@ -99,7 +94,6 @@ const AddressForm = () => {
         }
       } catch (err) {
         console.error('[AddressForm] checkExistingAddresses error:', err);
-        // If API fails, keep toggles enabled so user can choose — safer fallback.
         setDisableToggle(false);
         setAddressesCount(null);
       }
@@ -118,7 +112,6 @@ const AddressForm = () => {
           setHasAnyAddress(addresses.length > 0);
           setHasHeadquarters(addresses.some((addr: any) => addr.isDefault));
           if (addresses.length === 0) {
-            // chưa có gì → auto headquarters, disable toggle
             setIsDefault(true);
             setIsBranchAddress(false);
           }
@@ -145,11 +138,11 @@ const AddressForm = () => {
 
   const fetchSuggestions = async (text: string) => {
     setQuery(text);
-    setAddress(text); // Update address as user types
+    setAddress(text);
     setApiError('');
     if (text.length < 2) {
       setResults([]);
-      setLocation(''); // Clear location if query is too short
+      setLocation('');
       return;
     }
     try {
@@ -179,10 +172,10 @@ const AddressForm = () => {
       const data = await res.json();
       if (data.status === 'OK' && data.result?.geometry?.location) {
         const { lat, lng } = data.result.geometry.location;
-        setAddress(description);      // địa chỉ đã chọn
-        setLocation(`${lat},${lng}`);  // vị trí lat,lng
-        setQuery(description);         // cập nhật input
-        setResults([]);                // xóa gợi ý
+        setAddress(description);
+        setLocation(`${lat},${lng}`);
+        setQuery(description);
+        setResults([]);
         setApiError('');
       } else {
         setApiError('Không thể lấy chi tiết địa chỉ.');
@@ -196,7 +189,6 @@ const AddressForm = () => {
   const handleSubmit = async () => {
     try {
       setError('');
-      // Validate all fields are filled
       if (!fullName.trim()) {
         setError('Vui lòng nhập tên chi nhánh.');
         return;
@@ -205,80 +197,76 @@ const AddressForm = () => {
         setError('Vui lòng nhập số điện thoại.');
         return;
       }
-      if(!isValidPhone(phone)){
-        setError('Số điện thoại không đúng định dạng.')
+      if (!isValidPhone(phone)) {
+        setError('Số điện thoại không đúng định dạng.');
         return;
       }
       if (!address.trim() || !location) {
         setError('Vui lòng chọn một địa chỉ từ danh sách gợi ý.');
         return;
       }
-
       if (!isEditing && hasHeadquarters && isDefault) {
         setError('Đã có trụ sở chính, vui lòng chọn Địa chỉ chi nhánh.');
         return;
       }
-
       if (!isDefault && !isBranchAddress) {
         setError('Vui lòng chọn ít nhất một: Đặt làm trụ sở chính hoặc Địa chỉ chi nhánh.');
         return;
       }
-
-      setShowConfirmModal(true); // Show confirmation modal
+      setShowConfirmModal(true);
     } catch (err) {
       console.error('[AddressForm] Error:', err);
       setError('Không thể lưu địa chỉ. Vui lòng thử lại.');
     }
   };
 
- const confirmSubmit = async () => {
-  try {
-    setError('');
-    const payload: any = {
-      address,
-      location,
-      isDefault,
-      label,
-      fullName,
-      phone,
-      isBranchAddress,
-    };
+  const confirmSubmit = async () => {
+    try {
+      setError('');
+      const payload: any = {
+        address,
+        location,
+        isDefault,
+        label,
+        fullName,
+        phone,
+        isBranchAddress,
+      };
 
-    let currentId = initialData?.id;
-    if (isEditing && initialData?.id) {
-      await triggerUpdateAddress({ id: initialData.id, ...payload });
-      currentId = initialData.id;
-      console.log('[AddressForm] Address updated:', payload);
-    } else {
-      const created = await triggerCreateAddress(payload);
-      currentId = created?.id || created?.data?.id;
-      console.log('[AddressForm] Address created:', payload);
-    }
+      let currentId = initialData?.id;
+      if (isEditing && initialData?.id) {
+        await triggerUpdateAddress({ id: initialData.id, ...payload });
+        currentId = initialData.id;
+        console.log('[AddressForm] Address updated:', payload);
+      } else {
+        const created = await triggerCreateAddress(payload);
+        currentId = created?.id || created?.data?.id;
+        console.log('[AddressForm] Address created:', payload);
+      }
 
-    // 👉 Nếu địa chỉ này là trụ sở chính, cập nhật tất cả địa chỉ còn lại
-    if (isDefault && currentId) {
-      const all = await triggerGetAddress();
-      const list = Array.isArray(all) ? all : (all?.data?.data ?? []);
-      const others = list.filter((item: any) => item.id !== currentId);
-      for (const addr of others) {
-        if (addr.isDefault || !addr.isBranchAddress) {
-          await triggerUpdateAddress({
-            id: addr.id,
-            isDefault: false,
-            isBranchAddress: true,
-          });
+      if (isDefault && currentId) {
+        const all = await triggerGetAddress();
+        const list = Array.isArray(all) ? all : (all?.data?.data ?? []);
+        const others = list.filter((item: any) => item.id !== currentId);
+        for (const addr of others) {
+          if (addr.isDefault || !addr.isBranchAddress) {
+            await triggerUpdateAddress({
+              id: addr.id,
+              isDefault: false,
+              isBranchAddress: true,
+            });
+          }
         }
       }
-    }
 
-    setShowConfirmModal(false);
-    navigation.goBack();
-  } catch (err) {
-    console.error('[AddressForm] Error:', err);
-    setError('Không thể lưu địa chỉ. Vui lòng thử lại.');
-    setShowConfirmModal(false);
-  }
-};
+      setShowConfirmModal(false);
+      setShowSuccessModal(true); // Show SuccessModal
+    } catch (err) {
+      console.error('[AddressForm] Error:', err);
+      setError('Không thể lưu địa chỉ. Vui lòng thử lại.');
+      setShowConfirmModal(false);
+    }
+  };
 
   return (
     <View style={[styles.root, { paddingTop: top }]}>
@@ -295,7 +283,6 @@ const AddressForm = () => {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={styles.sectionTitle}>Địa chỉ</Text>
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
-        
 
         <View style={styles.formCard}>
           <InputRow
@@ -326,9 +313,7 @@ const AddressForm = () => {
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Địa chỉ</Text>
             {apiError ? <Text style={styles.errorText}>{apiError}</Text> : null}
-            <View
-
-              style={styles.inputBox}>
+            <View style={styles.inputBox}>
               <View style={styles.iconContainer}>
                 <Icons.Location width={20} height={20} />
               </View>
@@ -369,19 +354,16 @@ const AddressForm = () => {
             maxLength={255}
           />
 
-          {/* Always show toggles, but lock them when disableToggle === true */}
           <ToggleRow
             label="Đặt làm trụ sở chính"
             value={isDefault}
             onValueChange={(val) => {
-              // safeguard: ignore changes when locked
               if (disableToggle) return;
               setIsDefault(val);
               if (val) setIsBranchAddress(false);
             }}
             disabled={disableToggle}
           />
-
 
           <ToggleRow
             label="Địa chỉ chi nhánh"
@@ -394,15 +376,12 @@ const AddressForm = () => {
             disabled={disableToggle}
           />
 
-
           {disableToggle && !isEditing && (
             <Text style={styles.helperText}>Vì đây là địa chỉ đầu tiên, nó sẽ tự động là trụ sở chính và không thể thay đổi.</Text>
           )}
           {disableToggle && isEditing && (
             <Text style={styles.helperText}>Địa chỉ này là trụ sở chính và là địa chỉ duy nhất, không thể bỏ chọn hoặc xóa.</Text>
           )}
-
-
         </View>
 
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
@@ -442,6 +421,16 @@ const AddressForm = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Success Modal */}
+      <SuccessModal
+        visible={showSuccessModal}
+        message={isEditing ? 'Địa chỉ đã được cập nhật thành công!' : 'Địa chỉ đã được thêm mới thành công!'}
+        onClose={() => {
+          setShowSuccessModal(false);
+          navigation.goBack();
+        }}
+      />
     </View>
   );
 };
@@ -456,11 +445,11 @@ const InputRow = ({ label, icon, ...props }: any) => (
   </View>
 );
 
-const ToggleRow = ({ label, value, onValueChange }: { label: string; value: boolean; onValueChange: (val: boolean) => void; disabled?: boolean; }) => (
+const ToggleRow = ({ label, value, onValueChange, disabled }: { label: string; value: boolean; onValueChange: (val: boolean) => void; disabled?: boolean }) => (
   <View style={styles.toggleRow}>
     <Text style={styles.toggleLabel}>{label}</Text>
-    <TouchableOpacity onPress={() => onValueChange(!value)} activeOpacity={0.7}>
-      <View style={[styles.toggle, value && styles.toggleOn]}>
+    <TouchableOpacity onPress={() => !disabled && onValueChange(!value)} activeOpacity={0.7}>
+      <View style={[styles.toggle, value && styles.toggleOn, disabled && styles.toggleDisabled]}>
         <View style={[styles.knob, value && styles.knobOn]} />
       </View>
     </TouchableOpacity>
@@ -475,7 +464,7 @@ const styles = StyleSheet.create({
   scrollContainer: { padding: 14 },
   sectionTitle: { fontSize: 16, fontWeight: '600', color: Colors.textPrimary, marginBottom: 12 },
   formCard: { backgroundColor: Colors.white, borderRadius: 16, padding: 16 },
-  inputContainer: { marginBottom: 16 },//
+  inputContainer: { marginBottom: 16 },
   label: { fontSize: 14, color: Colors.black, marginBottom: 8 },
   inputBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white, borderRadius: 35, paddingHorizontal: 15, height: 50, borderWidth: 1, borderColor: '#E8E8E8' },
   iconContainer: { marginRight: 10 },
@@ -490,6 +479,7 @@ const styles = StyleSheet.create({
   submitButton: { backgroundColor: Colors.primary, borderRadius: 30, height: 50, justifyContent: 'center', alignItems: 'center', marginTop: 24 },
   toggle: { width: 44, height: 24, borderRadius: 15, backgroundColor: '#E9E9EA', padding: 1, justifyContent: 'center' },
   toggleOn: { backgroundColor: Colors.primary },
+  toggleDisabled: { opacity: 0.5 },
   knob: { width: 20, height: 20, borderRadius: 13, backgroundColor: Colors.white, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 1, elevation: 2 },
   knobOn: { alignSelf: 'flex-end' },
   submitButtonText: { color: Colors.white, fontSize: 16, fontWeight: 'bold' },

@@ -38,7 +38,6 @@ const defaultOperatingHours: IOperatingHours = {
   sunday: null,
 };
 
-// List of valid days to ensure only these are processed
 const validDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 const Information = () => {
@@ -72,21 +71,22 @@ const Information = () => {
         const res = await triggerGetInfo();
         const data = res.data;
         if (data) {
-          // Xử lý operatingHours raw
           let rawHours: any = data.operatingHours ?? {};
+          console.log('rawHours before parse:', rawHours);
           if (typeof rawHours === 'string') {
             try {
               rawHours = JSON.parse(rawHours);
+              console.log('rawHours after parse:', rawHours);
             } catch (e) {
               rawHours = {};
               console.warn('operatingHours parse failed', e);
             }
           }
 
-          // Chuẩn hóa operatingHours
           const sanitizedOperatingHours: IOperatingHours = { ...defaultOperatingHours };
           validDays.forEach(day => {
             const v = rawHours?.[day];
+            console.log(`Processing ${day}:`, v);
             if (v == null) {
               sanitizedOperatingHours[day as keyof IOperatingHours] = null;
               return;
@@ -120,19 +120,23 @@ const Information = () => {
             sanitizedOperatingHours[day as keyof IOperatingHours] = null;
           });
 
-          // Xử lý activeSince - chuyển từ timestamp thành năm (number)
+          // Handle activeSince - treat as year, not timestamp
           let activeSinceYear: number | undefined = undefined;
           if (data.activeSince) {
             if (typeof data.activeSince === 'number') {
-              activeSinceYear = new Date(data.activeSince).getFullYear();
+              // If it's a 4-digit number, treat it as a year
+              if (data.activeSince >= 1990 && data.activeSince <= new Date().getFullYear()) {
+                activeSinceYear = data.activeSince;
+              } else {
+                // Otherwise, it's a timestamp
+                activeSinceYear = new Date(data.activeSince).getFullYear();
+              }
             } else if (typeof data.activeSince === 'string') {
               const parsed = parseInt(data.activeSince);
               if (!isNaN(parsed)) {
-                // Nếu là năm (4 chữ số)
                 if (parsed >= 1990 && parsed <= new Date().getFullYear()) {
                   activeSinceYear = parsed;
                 } else {
-                  // Nếu là timestamp
                   activeSinceYear = new Date(parsed).getFullYear();
                 }
               }
@@ -142,7 +146,7 @@ const Information = () => {
           const updatedData: PartnerProfile = {
             ...data,
             name: data.fullName || data.name || '',
-            operatingHours: sanitizedOperatingHours,
+            operatingHours: sanitizedOperatingHours ?? defaultOperatingHours,
             type: data.type ?? 'SHOE_CLEANING',
             activeSince: activeSinceYear,
           };
@@ -166,10 +170,8 @@ const Information = () => {
     return JSON.stringify(formData) !== JSON.stringify(initialData);
   };
 
-  // 🔹 Update field text
   const handleInputChange = (field: keyof PartnerProfile, value: string) => {
     if (field === 'activeSince') {
-      // Chỉ cho phép nhập số và giới hạn 4 chữ số
       const numericValue = value.replace(/\D/g, '');
       if (numericValue.length <= 4) {
         const yearNumber = numericValue ? parseInt(numericValue) : undefined;
@@ -178,13 +180,12 @@ const Information = () => {
     } else {
       setFormData((prev: any) => ({ ...prev, [field]: value }));
     }
-    
+
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
 
-  // 🔹 Gửi API update
   const handleUpdate = async () => {
     let newErrors: { [key: string]: string } = {};
     let isValid = true;
@@ -205,7 +206,6 @@ const Information = () => {
       isValid = false;
     }
 
-    // Validate activeSince (năm) - phải từ 1990 đến năm hiện tại
     if (!formData.activeSince) {
       newErrors.activeSince = 'Năm hoạt động không được để trống';
       isValid = false;
@@ -222,7 +222,6 @@ const Information = () => {
       }
     }
 
-    // Validate operating hours - kiểm tra tất cả các ngày
     const hasInvalidOperatingHours = validDays.some(day => {
       const dayHours = formData.operatingHours?.[day];
       return !dayHours || !dayHours.open || !dayHours.close;
@@ -248,7 +247,7 @@ const Information = () => {
       name: formData.name ?? '',
       email: formData.email,
       phone: formData.phone,
-      activeSince: formData.activeSince ? new Date(formData.activeSince, 0, 1).getTime() : undefined,
+      activeSince: formData.activeSince, // Ensure this is a year (number)
       bankName: formData.bankName,
       bankAccountNumber: formData.bankAccountNumber,
       bankAccountName: formData.bankAccountName,
@@ -258,11 +257,11 @@ const Information = () => {
     };
 
     try {
-      console.log('==>', payload);
+      console.log('Payload to update:', payload); // Debug log
       await triggerUpdateInfo(payload);
       setShowSuccessModal(true);
     } catch (error: any) {
-      console.log('==>', error);
+      console.log('Update error:', error);
       showMessageError(error);
     } finally {
       setIsLoading(false);
@@ -280,7 +279,6 @@ const Information = () => {
   return (
     <View style={[styles.container, { paddingTop: top }]}>
       <StatusBar barStyle="dark-content" />
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => {
@@ -298,13 +296,11 @@ const Information = () => {
         <View style={{ width: 45 }} />
       </View>
 
-      {/* Content */}
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.avatarContainer}>
           <Avatar />
         </View>
 
-        {/* Inputs */}
         <InputRow
           label="Họ và tên"
           value={formData.name}
@@ -340,7 +336,6 @@ const Information = () => {
           placeholder="VD: 2023"
         />
 
-        {/* Bank */}
         <Text style={styles.sectionTitle}>Ngân hàng</Text>
         <TouchableOpacity style={styles.bankSelector} onPress={() => setShowBankModal(true)}>
           <View style={styles.inputIconContainer}>
@@ -373,27 +368,28 @@ const Information = () => {
         )}
         {errors.bank && <Text style={styles.errorText}>{errors.bank}</Text>}
 
-        {/* Operating hours */}
         <Text style={styles.sectionTitle}>Giờ hoạt động</Text>
-        {validDays.map(day => (
-          <DayOperatingRow
-            key={day}
-            label={day.charAt(0).toUpperCase() + day.slice(1)}
-            value={formData.operatingHours?.[day] || null}
-            onChange={(val: any) =>
-              setFormData(prev => ({
-                ...prev,
-                operatingHours: {
-                  ...(prev.operatingHours ?? {}),
-                  [day]: val,
-                },
-              }))
-            }
-          />
-        ))}
+        {validDays.map(day => {
+          console.log(`${day}:`, formData.operatingHours?.[day]); // Debug log
+          return (
+            <DayOperatingRow
+              key={day}
+              label={day.charAt(0).toUpperCase() + day.slice(1)}
+              value={formData.operatingHours?.[day] || { open: '', close: '' }}
+              onChange={(val: any) =>
+                setFormData(prev => ({
+                  ...prev,
+                  operatingHours: {
+                    ...(prev.operatingHours ?? {}),
+                    [day]: val,
+                  },
+                }))
+              }
+            />
+          );
+        })}
         {errors.operatingHours && <Text style={styles.errorText}>{errors.operatingHours}</Text>}
 
-        {/* Update button */}
         <TouchableOpacity
           style={styles.updateButton}
           onPress={() => setShowUpdateConfirm(true)}
@@ -402,7 +398,6 @@ const Information = () => {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Modals */}
       <BankSelectionModal
         isVisible={showBankModal}
         onClose={() => setShowBankModal(false)}

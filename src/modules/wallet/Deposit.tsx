@@ -11,7 +11,7 @@ import QRCodePayment from '../../components/QRCodePayment';
 import SuccessModal from '../../components/SuccessModal';
 import InfoModal from '../../components/modals/InfoModal';
 import { useServicePackagesStore } from '../../states/servicePackages/servicePackagesStore';
-
+import { SafeAreaView } from 'react-native-safe-area-context';
 const presetAmounts = [100000, 200000, 300000, 500000, 1000000, 2000000];
 
 const Deposit = () => {
@@ -145,6 +145,7 @@ const Deposit = () => {
   };
 
   return (
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
     <View style={[styles.container, { paddingTop: top }]}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.header}>
@@ -188,6 +189,7 @@ const Deposit = () => {
         primaryText="Đã hiểu"
       />
     </View>
+    </SafeAreaView>
   );
 };
 
