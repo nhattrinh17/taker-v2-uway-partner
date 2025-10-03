@@ -36,7 +36,7 @@ const HeaderHome = () => {
       setAverage(res.data.averageRating);
       console.log('Average', res.data.averageRating);
     } catch (err) {
-      setError('Không thể tải số dư. Vui lòng thử lại.');
+      setError('Không thể tải đánh giá. Vui lòng thử lại.');
     }
   };
 

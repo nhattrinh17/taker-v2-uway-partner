@@ -72,6 +72,7 @@ export const styles = StyleSheet.create({
   timeText: {
     fontSize: scale(12),
     color: '#555',
+    marginLeft: 'auto',
   },
   clockWrapper: {
   marginLeft: 'auto',      // đẩy icon ra sát bên phải

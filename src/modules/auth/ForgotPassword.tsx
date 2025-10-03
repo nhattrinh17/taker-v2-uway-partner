@@ -92,62 +92,65 @@ const ForgotPassword = () => {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <SafeAreaView style={[sx.wrap, styles.container]}>
             <View style={styles.header}>
-              <TouchableOpacity onPress={() => replace('AuthStack', {screen: 'Login'})} style={styles.backButton}>
-                {Icons.BackbuttonProfile ? (
-                  <Icons.BackbuttonProfile width={45} height={45} />
-                ) : (
-                  <Text style={styles.backButtonText}>‹</Text>
-                )}
-              </TouchableOpacity>
+              <TouchableOpacity onPress={() => navigationRef.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              })} style={styles.backButton}>
+              {Icons.BackbuttonProfile ? (
+                <Icons.BackbuttonProfile width={45} height={45} />
+              ) : (
+                <Text style={styles.backButtonText}>‹</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <Image source={Images.LogoApp} style={[sx.logo, styles.logo]} />
+          <Text style={styles.title}>Quên mật khẩu</Text>
+
+          <View style={styles.form}>
+            <Text style={sx.label}>Số điện thoại</Text>
+            <View style={styles.inputRow}>
+              {Icons.Phone ? <Icons.Phone width={20} height={20} /> : null}
+              <TextInput
+                style={sx.input}
+                placeholder=""
+                value={phoneNumber}
+                onChangeText={setPhoneNumber}
+                keyboardType="phone-pad"
+                placeholderTextColor={Colors.gray}
+                maxLength={10}
+              />
+            </View>
+            {!!phoneError && <Text style={sx.errorText}>{phoneError}</Text>}
+            {!!error && <Text style={sx.errorText}>{error}</Text>}
+
+            <TouchableOpacity
+              style={[sx.loginBtn, !isValidVietnamesePhone(phoneNumber) && sx.loginBtnDisabled, styles.sendButton]}
+              disabled={!isValidVietnamesePhone(phoneNumber)}
+              onPress={handleForgotPassword}
+            >
+              <Text style={[sx.loginBtnText, !isValidVietnamesePhone(phoneNumber) && sx.loginBtnTextDisabled]}>Gửi</Text>
+            </TouchableOpacity>
+
+            <View style={sx.dividerWrap}>
+              <View style={sx.divider} />
+              <Text style={sx.dividerText}>Hoặc</Text>
+              <View style={sx.divider} />
             </View>
 
-            <Image source={Images.LogoApp} style={[sx.logo, styles.logo]} />
-            <Text style={styles.title}>Quên mật khẩu</Text>
-
-            <View style={styles.form}>
-              <Text style={sx.label}>Số điện thoại</Text>
-              <View style={styles.inputRow}>
-                {Icons.Phone ? <Icons.Phone width={20} height={20} /> : null}
-                <TextInput
-                  style={sx.input}
-                  placeholder=""
-                  value={phoneNumber}
-                  onChangeText={setPhoneNumber}
-                  keyboardType="phone-pad"
-                  placeholderTextColor={Colors.gray}
-                  maxLength={10}
-                />
-              </View>
-              {!!phoneError && <Text style={sx.errorText}>{phoneError}</Text>}
-              {!!error && <Text style={sx.errorText}>{error}</Text>}
-
-              <TouchableOpacity
-                style={[sx.loginBtn, !isValidVietnamesePhone(phoneNumber) && sx.loginBtnDisabled, styles.sendButton]}
-                disabled={!isValidVietnamesePhone(phoneNumber)}
-                onPress={handleForgotPassword}
-              >
-                <Text style={[sx.loginBtnText, !isValidVietnamesePhone(phoneNumber) && sx.loginBtnTextDisabled]}>Gửi</Text>
+            <View style={sx.socialRow}>
+              <TouchableOpacity>
+                {Icons.Google ? <Icons.Google width={60} height={60} /> : null}
               </TouchableOpacity>
-
-              <View style={sx.dividerWrap}>
-                <View style={sx.divider} />
-                <Text style={sx.dividerText}>Hoặc</Text>
-                <View style={sx.divider} />
-              </View>
-
-              <View style={sx.socialRow}>
-                <TouchableOpacity>
-                  {Icons.Google ? <Icons.Google width={60} height={60} /> : null}
-                </TouchableOpacity>
-                <TouchableOpacity>
-                  {Icons.Facebook ? <Icons.Facebook width={60} height={60} /> : null}
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity>
+                {Icons.Facebook ? <Icons.Facebook width={60} height={60} /> : null}
+              </TouchableOpacity>
             </View>
-          </SafeAreaView>
-        </TouchableWithoutFeedback>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          </View>
+        </SafeAreaView>
+      </TouchableWithoutFeedback>
+    </ScrollView>
+    </KeyboardAvoidingView >
   );
 };
 
@@ -167,7 +170,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  backButton: {marginTop: 30 },
+  backButton: { marginTop: 30 },
   form: { marginTop: 3 },
   backButtonText: {
     fontSize: 30,

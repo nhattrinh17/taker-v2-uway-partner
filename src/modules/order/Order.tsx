@@ -94,8 +94,8 @@ const Orders = () => {
           pageNum === 1
             ? data
             : [...prev, ...data].filter(
-                (v, i, arr) => arr.findIndex(x => x.id === v.id) === i
-              )
+              (v, i, arr) => arr.findIndex(x => x.id === v.id) === i
+            )
         );
         setHasMore(pageNum * PAGE_SIZE < total);
         setPage(pageNum);
@@ -107,13 +107,19 @@ const Orders = () => {
         if (isRefresh) setRefreshing(false);
       }
     },
-    [triggerGetShoeBooking, filters]
+    [triggerGetShoeBooking]
   );
 
   // fetch lần đầu khi focus màn hình
   useFocusEffect(
     useCallback(() => {
-      fetchOrders(1, false);
+      fetchOrders(1, false, {});
+
+      return () => {
+        // cleanup -> reset khi thoát
+        setFilters({});
+        setActiveFilter('Tất cả');
+      };
     }, [fetchOrders])
   );
 
@@ -251,7 +257,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 200,
   },
   listTitle: {
     fontSize: 18,

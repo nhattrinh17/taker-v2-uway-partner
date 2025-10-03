@@ -72,121 +72,123 @@ const AcceptDetail = ({ route }: Props) => {
   const handleConfirmCancel = async () => {
     if (!selectedOrder) return;
     await triggerRejectShoeBooking({ id: item.shoeBookingId });
-    route.params?.onRejected?.(item.shoeBookingId); 
+    route.params?.onRejected?.(item.shoeBookingId);
     setShowCancelModal(false);
     setSuccessType('reject');
     setShowSuccess(true);
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <Header title="Chi tiết đơn hàng" />
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+      <SafeAreaView style={styles.container} edges={['bottom']}>
+        <Header title="Chi tiết đơn hàng" />
 
-      {/* Order Timing and Details */}
-      <View style={styles.detailSection}>
-        <Text style={styles.sectionLabel}>Thông tin chi tiết đơn hàng</Text>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailText}>{formatCustomDatetimeV2(item.bookingTime)}</Text>
-        </View>
-      </View>
-
-      {/* Service and Amount */}
-      <View style={styles.serviceSection}>
-        <View style={styles.serviceRow}>
-          <View style={styles.serviceIcon}>
-            <Icons.Shoe width={scale(34)} height={scale(34)} />
+        {/* Order Timing and Details */}
+        <View style={styles.detailSection}>
+          <Text style={styles.sectionLabel}>Thông tin chi tiết đơn hàng</Text>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailText}>{formatCustomDatetimeV2(item.bookingTime)}</Text>
           </View>
-          <View style={styles.serviceText}>
-            <Text style={styles.serviceLabel}>Dịch vụ đánh giày</Text>
-            <Text style={styles.serviceAmount}>{item.shoeServiceName}</Text>
+        </View>
+
+        {/* Service and Amount */}
+        <View style={styles.serviceSection}>
+          <View style={styles.serviceRow}>
+            <View style={styles.serviceIcon}>
+              <Icons.Shoe width={scale(34)} height={scale(34)} />
+            </View>
+            <View style={styles.serviceText}>
+              <Text style={styles.serviceLabel}>Dịch vụ đánh giày</Text>
+              <Text style={styles.serviceAmount}>{item.shoeServiceName}</Text>
+            </View>
+            <Text style={styles.serviceNote}>{formatCurrencyRoundedToHundred(item.finalPrice)}</Text>
           </View>
-          <Text style={styles.serviceNote}>{formatCurrencyRoundedToHundred(item.finalPrice)}</Text>
         </View>
-      </View>
 
-      {/* Order Timeline */}
-      <View style={styles.detailSection}>
-        <Text style={styles.sectionLabel}>Thông tin đơn hàng</Text>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailText}>Thời gian đặt</Text>
-          <Text style={styles.detailValue}>{formatCustomDatetimeV2(item.bookingTime)}</Text>
+        {/* Order Timeline */}
+        <View style={styles.detailSection}>
+          <Text style={styles.sectionLabel}>Thông tin đơn hàng</Text>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailText}>Thời gian đặt</Text>
+            <Text style={styles.detailValue}>{formatCustomDatetimeV2(item.bookingTime)}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailText}>Thời gian dự kiến</Text>
+            <Text style={styles.detailValue}>
+              {convertTime(item.expectedDeliveryTime, item.bookingTime)}
+            </Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailText}>Mô tả: {item.shoeServiceDes}</Text>
+          </View>
         </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailText}>Thời gian dự kiến</Text>
-          <Text style={styles.detailValue}>
-            {convertTime(item.expectedDeliveryTime, item.bookingTime)}
-          </Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailText}>Mô tả: {item.shoeServiceDes}</Text>
-        </View>
-      </View>
 
-      {/* Images */}
-      <View style={styles.processingImagesGrid}>
-        {parseImages(item.imageUrls).length > 0 ? (
-          <ViewImageModal
-            images={parseImages(item.imageUrls).map(img => `${s3Url}${img}`)}
-          />
-        ) : (
-          <Text style={styles.emptyText}>Khách hàng chưa thêm ảnh</Text>
-        )}
-      </View>
-
-      {/* Fee Breakdown */}
-      <View style={styles.feeSection}>
-        <View style={styles.feeRow}>
-          <Text style={styles.sectionLabel}>Thu nhập dự kiến</Text>
+        {/* Images */}
+        <View style={styles.processingImagesGrid}>
+          {parseImages(item.imageUrls).length > 0 ? (
+            <ViewImageModal
+              images={parseImages(item.imageUrls).map(img => `${s3Url}${img}`)}
+            />
+          ) : (
+            <Text style={styles.emptyText}>Khách hàng chưa thêm ảnh</Text>
+          )}
         </View>
-        {/* <View style={styles.feeRow}>
+
+        {/* Fee Breakdown */}
+        <View style={styles.feeSection}>
+          <View style={styles.feeRow}>
+            <Text style={styles.sectionLabel}>Thu nhập dự kiến</Text>
+          </View>
+          {/* <View style={styles.feeRow}>
           <Text style={styles.feeLabel}>Cước phí</Text>
           <Text style={styles.feeValue}>{formatCurrencyRoundedToHundred(item.finalPrice)}</Text>
         </View> */}
-        <View style={styles.feeRow}>
-          <Text style={styles.feeLabel}>Tổng tiền</Text>
-          <Text style={styles.feeValue}>{formatCurrencyRoundedToHundred(item.finalPrice)}</Text>
+          <View style={styles.feeRow}>
+            <Text style={styles.feeLabel}>Tổng tiền</Text>
+            <Text style={styles.feeValue}>{formatCurrencyRoundedToHundred(item.finalPrice)}</Text>
+          </View>
         </View>
-      </View>
 
-      {/* Action Buttons */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.cancelButton} onPress={() => handleRejectPress(item)}>
-          <Text style={styles.cancelText}>Từ chối</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.acceptButton}
-          onPress={() => setShowBranchModal(true)} // mở modal chọn chi nhánh
-        >
-          <Text style={styles.acceptText}>Nhận đơn</Text>
-        </TouchableOpacity>
-      </View>
+        {/* Action Buttons */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.cancelButton} onPress={() => handleRejectPress(item)}>
+            <Text style={styles.cancelText}>Từ chối</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.acceptButton}
+            onPress={() => setShowBranchModal(true)} // mở modal chọn chi nhánh
+          >
+            <Text style={styles.acceptText}>Nhận đơn</Text>
+          </TouchableOpacity>
+        </View>
 
-      <ModalSelectBranch
-        visible={showBranchModal}
-        order={item}
-        onClose={() => setShowBranchModal(false)}
-        onConfirm={handleConfirmBranch}
-      />
+        <ModalSelectBranch
+          visible={showBranchModal}
+          order={item}
+          onClose={() => setShowBranchModal(false)}
+          onConfirm={handleConfirmBranch}
+        />
 
-      <SuccessModal
-        visible={showSuccess}
-        onClose={() => {
-          setShowSuccess(false)
-          goBack()
-        }}
-        title={successType === 'accept' ? 'Đã nhận đơn' : 'Đã huỷ đơn'}
-        message={successType === 'accept'
-          ? 'Bạn đã nhận đơn thành công'
-          : 'Bạn đã từ chối đơn thành công'}
-      />
+        <SuccessModal
+          visible={showSuccess}
+          onClose={() => {
+            setShowSuccess(false)
+            goBack()
+          }}
+          title={successType === 'accept' ? 'Đã nhận đơn' : 'Đã huỷ đơn'}
+          message={successType === 'accept'
+            ? 'Bạn đã nhận đơn thành công'
+            : 'Bạn đã từ chối đơn thành công'}
+        />
 
-      <CancelModal
-        visible={showCancelModal}
-        message="Bạn có chắc chắn muốn huỷ đơn hàng?"
-        textBtn="Xác nhận"
-        onClose={() => setShowCancelModal(false)}
-        onContinue={handleConfirmCancel}
-      />
+        <CancelModal
+          visible={showCancelModal}
+          message="Bạn có chắc chắn muốn huỷ đơn hàng?"
+          textBtn="Xác nhận"
+          onClose={() => setShowCancelModal(false)}
+          onContinue={handleConfirmCancel}
+        />
+      </SafeAreaView>
     </SafeAreaView>
   );
 };

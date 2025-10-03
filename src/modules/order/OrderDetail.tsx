@@ -351,303 +351,305 @@ const OrderDetail = ({ route }: Props) => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <Header title="Chi tiết đơn hàng" />
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+      <SafeAreaView style={styles.container} edges={['bottom']}>
+        <Header title="Chi tiết đơn hàng" />
 
-      <ScrollView
-        style={styles.scrollContent}
-        contentContainerStyle={{ paddingBottom: scale(100) }}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0B96DF']} />
-        }
-      >
-        {status === 'IN_PROGRESS' && parsedProcessingImages.length > 0 ? (
-          <View style={styles.processingSection}>
-            <Text style={styles.sectionLabel}>Ảnh tiếp nhận đơn hàng</Text>
-            <View style={styles.processingImagesGrid}>
-              {parseImages(orderData.imageUrls).length > 0 ? (
-                <ViewImageModal
-                  images={parseImages(orderData.imageUrls).map(img => `${s3Url}${img}`)}
-                />
-              ) : (
-                <Text style={styles.emptyText}>Khách hàng chưa thêm ảnh</Text>
-              )}
-            </View>
-            <Text style={styles.sectionLabel}>Quy trình vệ sinh thực tế</Text>
-            <View style={styles.processingImagesGrid}>
-              <ViewImageModal
-                images={parseImages(orderData.processingImages).map(img => `${s3Url}${img}`)}
-              />
-            </View>
-            <Text style={styles.sectionLabel}>Ảnh bàn giao cho đơn vị vận chuyển</Text>
-            {uploadedImages.length > 0 ? (
-              <View style={styles.uploadedImagesWrapper}>
-                {uploadedImages.map((url, idx) => (
-                  <View key={idx} style={styles.imageItem}>
-                    <Image source={{ uri: `${s3Url}${url}` }} style={styles.uploadedImage} resizeMode="contain" />
-                    <TouchableOpacity
-                      style={styles.deleteIcon}
-                      onPress={() => removeImage(idx)}
-                    >
-                      <Icons.DeleteCircle width={22} height={22} color="#C82023" />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-                <TouchableOpacity onPress={showActionSheet} style={styles.addMoreBox}>
-                  <Text style={{ fontSize: 32, color: '#555' }}>+</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity onPress={showActionSheet}>
-                <View style={styles.uploadBox}>
-                  <Icons.Camera1 width={32} height={32} color="#555" />
-                  <Text style={{ marginTop: 4, color: '#555' }}>
-                    Thêm ít nhất 2 ảnh
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            )}
-          </View>
-        ) : (
-          <>
-            <View style={styles.detailSection1}>
-              <TouchableOpacity onPress={handlePress} activeOpacity={0.7}>
-                <Text style={styles.sectionLabel1}>Thông tin chi tiết đơn hàng</Text>
-
-                <View style={styles.detailRow}>
-                  <View style={styles.detailTextBox}>
-                    <Icons.Procedure style={styles.detailIcon} />
-                    <Text style={styles.detailText1}>
-                      Theo dõi quá trình xử lý đơn hàng của bạn
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            </View>
-
-            {/* Service */}
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={[styles.serviceSection, expanded && styles.serviceSectionExpanded]}
-              onPress={() => setExpanded(p => !p)}
-            >
-              <View style={styles.serviceRow}>
-                <View style={styles.serviceIcon}>
-                  <Icons.Shoe width={40} height={40} />
-                </View>
-                <View style={styles.serviceText}>
-                  <Text style={styles.serviceLabel}>Dịch vụ đánh giày</Text>
-                  <Text style={styles.serviceAmount}>{orderData.shoeService.name}</Text>
-                  {expanded && (
-                    <Text style={styles.serviceDescription}>
-                      <Text style={styles.des}>Mô tả cơ bản: </Text>
-                      {orderData.shoeService.simpleDes || 'Không có mô tả'}
-                    </Text>
-                  )}
-                </View>
-                <Text style={styles.serviceNote}>
-                  {formatCurrencyRoundedToHundred(orderData.shoeService.price)}
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* Trạng thái */}
-            <View style={styles.statusSection}>
-              <Text style={styles.sectionLabel}>Thông tin đơn hàng</Text>
-            </View>
-            <View style={styles.detailSection}>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailText}>Trạng thái</Text>
-                <View
-                  style={[
-                    styles.statusBadge,
-                    { backgroundColor: getStatusBackground(orderData.status) },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.detailValue,
-                      { color: getStatusColor(orderData.status) },
-                    ]}
-                  >
-                    {STATUS_BOOKING(orderData.status)}
-                  </Text>
-                </View>
-
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailText}>Thời gian đặt</Text>
-                <Text style={styles.detailValue}>
-                  {formatCustomDatetimeV2(orderData.bookingDate)}
-                </Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailText}>Thời gian dự kiến</Text>
-                <Text style={styles.detailValue}>
-                  {convertTime(orderData.expectedDeliveryTime, orderData.bookingDate)}
-                </Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailText}>
-                  Mô tả: {orderData.shoeService.description}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.imageContainer}>
-              {parseImages(orderData.imageUrls).length > 0 ? (
-                <ViewImageModal
-                  images={parseImages(orderData.imageUrls).map(img => `${s3Url}${img}`)}
-                />
-              ) : (
-                <Text style={styles.emptyText}>Khách hàng chưa thêm ảnh</Text>
-              )}
-            </View>
-
-            {(status === 'RETURN_FIND_DRIVER' || status === 'COMPLETED') && (
-              <>
-                <Text style={styles.sectionLabel}>Quy trình vệ sinh thực tế</Text>
-                <View style={styles.processingImagesGrid}>
+        <ScrollView
+          style={styles.scrollContent}
+          contentContainerStyle={{ paddingBottom: scale(100) }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0B96DF']} />
+          }
+        >
+          {status === 'IN_PROGRESS' && parsedProcessingImages.length > 0 ? (
+            <View style={styles.processingSection}>
+              <Text style={styles.sectionLabel}>Ảnh tiếp nhận đơn hàng</Text>
+              <View style={styles.processingImagesGrid}>
+                {parseImages(orderData.imageUrls).length > 0 ? (
                   <ViewImageModal
-                    images={parseImages(orderData.processingImages).map(img => `${s3Url}${img}`)}
+                    images={parseImages(orderData.imageUrls).map(img => `${s3Url}${img}`)}
                   />
-                </View>
-                <Text style={styles.sectionLabel}>Bàn giao cho đơn vị vận chuyển</Text>
-                <View style={styles.processingImagesGrid}>
-
-                  <ViewImageModal
-                    images={parseImages(orderData.completedImages).map(img => `${s3Url}${img}`)}
-                  />
-
-                </View>
-              </>
-            )}
-
-            {/* Quy trình vệ sinh */}
-            {(status === 'IN_PROGRESS') && (
-              <View style={styles.cleanProcessContainer}>
-                <Text style={styles.sectionLabel}>Quy trình vệ sinh thực tế</Text>
-                {uploadedImages.length > 0 ? (
-                  <View style={styles.uploadedImagesWrapper}>
-                    {uploadedImages.map((url, idx) => (
-                      <View key={idx} style={styles.imageItem}>
-                        <Image source={{ uri: `${s3Url}${url}` }} style={styles.uploadedImage} />
-                        <TouchableOpacity
-                          style={styles.deleteIcon}
-                          onPress={() => removeImage(idx)}
-                        >
-                          <Icons.DeleteCircle width={22} height={22} color="#C82023" />
-                        </TouchableOpacity>
-                      </View>
-                    ))}
-                    <TouchableOpacity onPress={showActionSheet} style={styles.addMoreBox}>
-                      <Text style={{ fontSize: 32, color: '#555' }}>+</Text>
-                    </TouchableOpacity>
-                  </View>
                 ) : (
-                  <TouchableOpacity onPress={showActionSheet}>
-                    <View style={styles.uploadBox}>
-                      <Icons.Camera1 width={32} height={32} color="#555" />
-                      <Text style={{ marginTop: 4, color: '#555' }}>
-                        Thêm ít nhất 2 ảnh
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
+                  <Text style={styles.emptyText}>Khách hàng chưa thêm ảnh</Text>
                 )}
               </View>
-            )}
-
-            {/* Fee */}
-            <View style={styles.feeSection}>
-              <View style={styles.feeRow}>
-                <Text style={styles.sectionLabel}>Thu nhập dự kiến</Text>
+              <Text style={styles.sectionLabel}>Quy trình vệ sinh thực tế</Text>
+              <View style={styles.processingImagesGrid}>
+                <ViewImageModal
+                  images={parseImages(orderData.processingImages).map(img => `${s3Url}${img}`)}
+                />
               </View>
-              <View style={styles.feeRow}>
-                <Text style={styles.feeLabel}>Cước phí</Text>
-                <Text style={styles.feeValue}>
-                  {formatCurrencyRoundedToHundred(
-                    (orderData.finalPrice ?? 0) - (orderData.shoeService?.price ?? 0)
-                  )}
-                </Text>
-              </View>
-              <View style={styles.feeRow}>
-                <Text style={styles.feeLabel}>Tổng tiền</Text>
-                <Text style={styles.feeValue}>
-                  {formatCurrencyRoundedToHundred(orderData.finalPrice)}
-                </Text>
-              </View>
+              <Text style={styles.sectionLabel}>Ảnh bàn giao cho đơn vị vận chuyển</Text>
+              {uploadedImages.length > 0 ? (
+                <View style={styles.uploadedImagesWrapper}>
+                  {uploadedImages.map((url, idx) => (
+                    <View key={idx} style={styles.imageItem}>
+                      <Image source={{ uri: `${s3Url}${url}` }} style={styles.uploadedImage} resizeMode="contain" />
+                      <TouchableOpacity
+                        style={styles.deleteIcon}
+                        onPress={() => removeImage(idx)}
+                      >
+                        <Icons.DeleteCircle width={22} height={22} color="#C82023" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  <TouchableOpacity onPress={showActionSheet} style={styles.addMoreBox}>
+                    <Text style={{ fontSize: 32, color: '#555' }}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity onPress={showActionSheet}>
+                  <View style={styles.uploadBox}>
+                    <Icons.Camera1 width={32} height={32} color="#555" />
+                    <Text style={{ marginTop: 4, color: '#555' }}>
+                      Thêm ít nhất 2 ảnh
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              )}
             </View>
-          </>
-        )}
+          ) : (
+            <>
+              <View style={styles.detailSection1}>
+                <TouchableOpacity onPress={handlePress} activeOpacity={0.7}>
+                  <Text style={styles.sectionLabel1}>Thông tin chi tiết đơn hàng</Text>
 
-      </ScrollView>
+                  <View style={styles.detailRow}>
+                    <View style={styles.detailTextBox}>
+                      <Icons.Procedure style={styles.detailIcon} />
+                      <Text style={styles.detailText1}>
+                        Theo dõi quá trình xử lý đơn hàng của bạn
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              </View>
 
-      {/* Button hành động */}
-      <View style={styles.buttonContainer}>
-        {orderData.status === 'CANCELLED' ? (
-          <Text style={{ color: '#C82023', fontWeight: 'bold', fontSize: 28 }}>Đã huỷ</Text>
-        ) : (
-          <CommonButton
-            text={messageStatus}
-            onPress={handleAction}
-            isDisable={orderData.status === 'RETURN_FIND_DRIVER' ||
-              (status === 'IN_PROGRESS' &&
-                (
-                  // Nếu đang ở bước Đóng gói hoặc Bàn giao mà ảnh < 2
-                  messageStatus === 'Đóng gói' ||
-                  messageStatus === 'Bàn giao'
-                ) &&
-                uploadedImages.length < 2
-              )
-            }
-            buttonStyles={[
-              orderData.status === 'RETURN_FIND_DRIVER' && { backgroundColor: '#4f4545ff' },
-              messageStatus === 'Huỷ đơn hàng' && { backgroundColor: '#C82023' },
-              // ➜ Khi disable do thiếu ảnh, cho nút xám đi
-              (status === 'IN_PROGRESS' &&
-                (messageStatus === 'Đóng gói' || messageStatus === 'Bàn giao') &&
-                uploadedImages.length < 2) && { backgroundColor: '#aaa' },
-            ]}
-          />
-        )}
-      </View>
+              {/* Service */}
+              <TouchableOpacity
+                activeOpacity={0.8}
+                style={[styles.serviceSection, expanded && styles.serviceSectionExpanded]}
+                onPress={() => setExpanded(p => !p)}
+              >
+                <View style={styles.serviceRow}>
+                  <View style={styles.serviceIcon}>
+                    <Icons.Shoe width={40} height={40} />
+                  </View>
+                  <View style={styles.serviceText}>
+                    <Text style={styles.serviceLabel}>Dịch vụ đánh giày</Text>
+                    <Text style={styles.serviceAmount}>{orderData.shoeService.name}</Text>
+                    {expanded && (
+                      <Text style={styles.serviceDescription}>
+                        <Text style={styles.des}>Mô tả cơ bản: </Text>
+                        {orderData.shoeService.simpleDes || 'Không có mô tả'}
+                      </Text>
+                    )}
+                  </View>
+                  <Text style={styles.serviceNote}>
+                    {formatCurrencyRoundedToHundred(orderData.shoeService.price)}
+                  </Text>
+                </View>
+              </TouchableOpacity>
 
-      <CancelModal
-        visible={showCancelModal}
-        message="Bạn có chắc chắn muốn huỷ đơn hàng?"
-        textBtn="Xác nhận"
-        onClose={() => setShowCancelModal(false)}
-        onContinue={handleConfirmCancel}
-      />
-      <SuccessModal
-        visible={showSuccess}
-        title="Thành công"
-        message="Đơn hàng đã được huỷ."
-        autoCloseMs={2000}
-        onClose={() => {
-          setShowSuccess(false);
-          goBack();
-        }}
-      />
-      <ModalSuccessOrder
-        visible={showModalSuccess}
-        onClose={() => {
-          setShowModalSuccess(false);
-          navigate('BottomStack', { screen: 'HomeStack' });
-        }}
-        onTrackOrder={() => {
-          setShowModalSuccess(false);
-          handlePress();
-        }}
-      />
-      <FailureModal
-        visible={showModalFail}
-        onClose={() => setShowModalFail(false)}
-        message={error}
-        onContinue={() => { }}
-      />
+              {/* Trạng thái */}
+              <View style={styles.statusSection}>
+                <Text style={styles.sectionLabel}>Thông tin đơn hàng</Text>
+              </View>
+              <View style={styles.detailSection}>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailText}>Trạng thái</Text>
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      { backgroundColor: getStatusBackground(orderData.status) },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.detailValue,
+                        { color: getStatusColor(orderData.status) },
+                      ]}
+                    >
+                      {STATUS_BOOKING(orderData.status)}
+                    </Text>
+                  </View>
 
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailText}>Thời gian đặt</Text>
+                  <Text style={styles.detailValue}>
+                    {formatCustomDatetimeV2(orderData.bookingDate)}
+                  </Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailText}>Thời gian dự kiến</Text>
+                  <Text style={styles.detailValue}>
+                    {convertTime(orderData.expectedDeliveryTime, orderData.bookingDate)}
+                  </Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailText}>
+                    Mô tả: {orderData.shoeService.description}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.imageContainer}>
+                {parseImages(orderData.imageUrls).length > 0 ? (
+                  <ViewImageModal
+                    images={parseImages(orderData.imageUrls).map(img => `${s3Url}${img}`)}
+                  />
+                ) : (
+                  <Text style={styles.emptyText}>Khách hàng chưa thêm ảnh</Text>
+                )}
+              </View>
+
+              {(status === 'RETURN_FIND_DRIVER' || status === 'COMPLETED') && (
+                <>
+                  <Text style={styles.sectionLabel}>Quy trình vệ sinh thực tế</Text>
+                  <View style={styles.processingImagesGrid}>
+                    <ViewImageModal
+                      images={parseImages(orderData.processingImages).map(img => `${s3Url}${img}`)}
+                    />
+                  </View>
+                  <Text style={styles.sectionLabel}>Bàn giao cho đơn vị vận chuyển</Text>
+                  <View style={styles.processingImagesGrid}>
+
+                    <ViewImageModal
+                      images={parseImages(orderData.completedImages).map(img => `${s3Url}${img}`)}
+                    />
+
+                  </View>
+                </>
+              )}
+
+              {/* Quy trình vệ sinh */}
+              {(status === 'IN_PROGRESS') && (
+                <View style={styles.cleanProcessContainer}>
+                  <Text style={styles.sectionLabel}>Quy trình vệ sinh thực tế</Text>
+                  {uploadedImages.length > 0 ? (
+                    <View style={styles.uploadedImagesWrapper}>
+                      {uploadedImages.map((url, idx) => (
+                        <View key={idx} style={styles.imageItem}>
+                          <Image source={{ uri: `${s3Url}${url}` }} style={styles.uploadedImage} />
+                          <TouchableOpacity
+                            style={styles.deleteIcon}
+                            onPress={() => removeImage(idx)}
+                          >
+                            <Icons.DeleteCircle width={22} height={22} color="#C82023" />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                      <TouchableOpacity onPress={showActionSheet} style={styles.addMoreBox}>
+                        <Text style={{ fontSize: 32, color: '#555' }}>+</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity onPress={showActionSheet}>
+                      <View style={styles.uploadBox}>
+                        <Icons.Camera1 width={32} height={32} color="#555" />
+                        <Text style={{ marginTop: 4, color: '#555' }}>
+                          Thêm ít nhất 2 ảnh
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+
+              {/* Fee */}
+              <View style={styles.feeSection}>
+                <View style={styles.feeRow}>
+                  <Text style={styles.sectionLabel}>Thu nhập dự kiến</Text>
+                </View>
+                <View style={styles.feeRow}>
+                  <Text style={styles.feeLabel}>Cước phí</Text>
+                  <Text style={styles.feeValue}>
+                    {formatCurrencyRoundedToHundred(
+                      (orderData.finalPrice ?? 0) - (orderData.shoeService?.price ?? 0)
+                    )}
+                  </Text>
+                </View>
+                <View style={styles.feeRow}>
+                  <Text style={styles.feeLabel}>Tổng tiền</Text>
+                  <Text style={styles.feeValue}>
+                    {formatCurrencyRoundedToHundred(orderData.finalPrice)}
+                  </Text>
+                </View>
+              </View>
+            </>
+          )}
+
+        </ScrollView>
+
+        {/* Button hành động */}
+        <View style={styles.buttonContainer}>
+          {orderData.status === 'CANCELLED' ? (
+            <Text style={{ color: '#C82023', fontWeight: 'bold', fontSize: 28 }}>Đã huỷ</Text>
+          ) : (
+            <CommonButton
+              text={messageStatus}
+              onPress={handleAction}
+              isDisable={orderData.status === 'RETURN_FIND_DRIVER' ||
+                (status === 'IN_PROGRESS' &&
+                  (
+                    // Nếu đang ở bước Đóng gói hoặc Bàn giao mà ảnh < 2
+                    messageStatus === 'Đóng gói' ||
+                    messageStatus === 'Bàn giao'
+                  ) &&
+                  uploadedImages.length < 2
+                )
+              }
+              buttonStyles={[
+                orderData.status === 'RETURN_FIND_DRIVER' && { backgroundColor: '#4f4545ff' },
+                messageStatus === 'Huỷ đơn hàng' && { backgroundColor: '#C82023' },
+                // ➜ Khi disable do thiếu ảnh, cho nút xám đi
+                (status === 'IN_PROGRESS' &&
+                  (messageStatus === 'Đóng gói' || messageStatus === 'Bàn giao') &&
+                  uploadedImages.length < 2) && { backgroundColor: '#aaa' },
+              ]}
+            />
+          )}
+        </View>
+
+        <CancelModal
+          visible={showCancelModal}
+          message="Bạn có chắc chắn muốn huỷ đơn hàng?"
+          textBtn="Xác nhận"
+          onClose={() => setShowCancelModal(false)}
+          onContinue={handleConfirmCancel}
+        />
+        <SuccessModal
+          visible={showSuccess}
+          title="Thành công"
+          message="Đơn hàng đã được huỷ."
+          autoCloseMs={2000}
+          onClose={() => {
+            setShowSuccess(false);
+            goBack();
+          }}
+        />
+        <ModalSuccessOrder
+          visible={showModalSuccess}
+          onClose={() => {
+            setShowModalSuccess(false);
+            navigate('BottomStack', { screen: 'HomeStack' });
+          }}
+          onTrackOrder={() => {
+            setShowModalSuccess(false);
+            handlePress();
+          }}
+        />
+        <FailureModal
+          visible={showModalFail}
+          onClose={() => setShowModalFail(false)}
+          message={error}
+          onContinue={() => { }}
+        />
+
+      </SafeAreaView>
     </SafeAreaView>
   );
 };
@@ -658,7 +660,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-
   },
   scrollContent: {
     flex: 1,

@@ -77,7 +77,7 @@ const Profile = () => {
       <StatusBar barStyle="dark-content" />
       <ScrollView
         style={styles.container}
-        contentContainerStyle={{ paddingBottom: 20, paddingTop: top + 10 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Error Message */}
