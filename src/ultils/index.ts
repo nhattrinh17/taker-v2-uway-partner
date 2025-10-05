@@ -192,7 +192,7 @@ export const STATUS_BOOKING = (status: string) => {
     case 'FIND_SHOP':
       return 'Đang tìm cửa hàng phù hợp';
     case 'PICKUP_INCOMING':
-      return 'CHờ tài xế đang tới lấy đơn';
+      return 'Chờ tài xế đang tới lấy đơn';
     case 'SHOP_ACCEPTED':
       return 'Cửa hàng đã chấp nhận đơn';
     case 'FIND_SHOP_TIMEOUT':

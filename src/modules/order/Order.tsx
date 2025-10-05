@@ -20,6 +20,10 @@ import { formatCustomDatetimeV2 } from '../../ultils/validation';
 import { getStatusColor, STATUS_BOOKING, getStatusBackground } from '../../ultils';
 import { ShoeBooking } from '../../services/shoe/typings';
 import { ORDER_STATUS_LABELS } from '../../ultils';
+import { scale } from '../../ultils';
+import { Dimensions } from 'react-native';
+
+const screenWidth = Dimensions.get('window').width;
 
 const PAGE_SIZE = 10;
 
@@ -94,8 +98,8 @@ const Orders = () => {
           pageNum === 1
             ? data
             : [...prev, ...data].filter(
-              (v, i, arr) => arr.findIndex(x => x.id === v.id) === i
-            )
+                (v, i, arr) => arr.findIndex(x => x.id === v.id) === i
+              )
         );
         setHasMore(pageNum * PAGE_SIZE < total);
         setPage(pageNum);
@@ -144,15 +148,15 @@ const Orders = () => {
 
   return (
     <View style={styles.wrapper}>
-      <View style={[styles.container, { paddingTop: top }]}>
+      <View style={[styles.container, { paddingTop: top + 70 }]}>
         <StatusBar barStyle="dark-content" />
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={goBack}>
-            <Icons.Backbutton width={28} height={28} />
+          <TouchableOpacity onPress={goBack} style={styles.headerIcon}>
+            <Icons.Backbutton  />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Đơn hàng</Text>
-          <TouchableOpacity onPress={() => setIsSearchModalVisible(true)}>
+          <TouchableOpacity onPress={() => setIsSearchModalVisible(true)} style={styles.headerIcon}>
             <Icons.Moreoptions width={24} height={24} />
           </TouchableOpacity>
         </View>
@@ -162,6 +166,7 @@ const Orders = () => {
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filterContainer}
+          style={styles.filterScrollView}
         >
           {filterTabs.map(tab => (
             <TouchableOpacity
@@ -230,15 +235,40 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    height: 70,
+    backgroundColor: Colors.white,
+    paddingHorizontal: scale(20),
+    minHeight: scale(80),
+    zIndex: 999,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 60,
+    elevation: 8,
+  },
+   headerIcon: {
+    width: scale(48), // Tăng kích thước để chứa icon lớn hơn
+    height: scale(48),
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: scale(6),
+  },
+  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#1C1C1E' },
+  filterScrollView: {
+    marginTop: 8,
+  },
+  filterContainer: {
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    height: 50,
     backgroundColor: Colors.background,
   },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#1C1C1E' },
-  filterContainer: { paddingVertical: 12, paddingHorizontal: 16, backgroundColor: Colors.background },
   filterButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,

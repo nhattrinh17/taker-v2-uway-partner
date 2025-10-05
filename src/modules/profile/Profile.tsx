@@ -72,6 +72,17 @@ const Profile = () => {
     }
   };
 
+  const handleLogout = async () => {
+  try {
+    setToken('');
+    await useUserStore.getState().logout(); // Xóa token và trạng thái
+    replace('AuthStack', { screen: 'Login' });
+  } catch (err) {
+    console.error('[Profile] Lỗi khi đăng xuất:', err);
+    setError('Đăng xuất thất bại. Vui lòng thử lại.');
+  }
+};
+
   return (
     <View style={styles.root}>
       <StatusBar barStyle="dark-content" />
@@ -201,7 +212,7 @@ const Profile = () => {
           <TouchableOpacity
             style={styles.itemModal}
             onPress={() => {
-              setToken('');
+              handleLogout();
               replace('AuthStack', { screen: 'Login' });
             }}
           >

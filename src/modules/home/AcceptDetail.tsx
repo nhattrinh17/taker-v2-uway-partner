@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingVertical: scale(16),
-    backgroundColor: '#f0f4f8',
+    backgroundColor: Colors.background,
     position: 'absolute',
     bottom: 0,
     left: 0,

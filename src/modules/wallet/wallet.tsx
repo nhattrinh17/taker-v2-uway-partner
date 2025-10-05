@@ -25,6 +25,10 @@ import { goBack, navigate } from '../../navigation/utils/navigationUtils';
 import { Icons } from '../../assets';
 import ModalOrderSearch from '../../components/ModalOrderSearch';
 import { scale } from '../../ultils';
+import { Shadow } from 'react-native-shadow-2';
+import { Dimensions } from 'react-native';
+
+const screenWidth = Dimensions.get('window').width;
 
 interface Transaction {
   id: string;
@@ -162,6 +166,7 @@ const Wallet = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
+    getBalance();
     await getHistoryTransaction(1, filters);
     setRefreshing(false);
   };
@@ -215,32 +220,38 @@ const Wallet = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => setIsSearchModalVisible(true)}
-          style={styles.headerIcon}
-          activeOpacity={0.8}
-        >
-          {Icons.Moreoptions ? <Icons.Moreoptions width={scale(20)} height={scale(20)} /> : <Text>{'<'} </Text>}
-        </TouchableOpacity>
+      <Shadow
+        startColor={'#00000010'}
+        offset={[0, 5]} // Chỉ shadow phía dưới
+        distance={5} // Độ lan của bóng
+      >
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => setIsSearchModalVisible(true)}
+            style={styles.headerIcon}
+            activeOpacity={0.8}
+          >
+            {Icons.Moreoptions ? <Icons.Moreoptions width={scale(28)} height={scale(28)} /> : <Text>{'<'} </Text>}
+          </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Tài khoản</Text>
+          <Text style={styles.headerTitle}>Tài khoản</Text>
 
-        <TouchableOpacity
-          onPress={() => navigate('InCome')}
-          style={styles.headerRight}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.headerAction}>Thu nhập</Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            onPress={() => navigate('InCome')}
+            style={styles.headerRight}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.headerAction}>Thu nhập</Text>
+          </TouchableOpacity>
+        </View>
+      </Shadow>
 
       {/* Wallet card */}
       <ImageBackground
         source={Images.walletbackground}
-        style={styles.walletCard}
+        style={[styles.walletCard, { marginTop: scale(80) }]} // Tăng marginTop để phù hợp header lớn hơn
         imageStyle={styles.walletBgImage}
       >
         {/* Hàng trên: trái (ví + balance) – phải (username) */}
@@ -249,7 +260,7 @@ const Wallet = () => {
           <View style={{ flexShrink: 1 }}>
             <CommonText text="Ví Uway" styles={styles.labelWalletBox} />
             <View style={styles.balanceRow}>
-              <Text style={styles.labelAmount} >
+              <Text style={styles.labelAmount}>
                 {formatCurrency(balance || 0)}<Text style={styles.balanceUnit}>đ</Text>
               </Text>
             </View>
@@ -324,33 +335,56 @@ const styles = StyleSheet.create({
 
   // Header
   header: {
+    position: 'absolute',
+    top: 1,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: scale(16),
-    paddingVertical: scale(10),
-    backgroundColor: Colors.background,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#EDEDED',
+    justifyContent: 'center',
+    width: screenWidth,
+    paddingHorizontal: scale(20),
+    paddingBottom: scale(20), // Tăng để hạ chữ và icon
+    minHeight: scale(60), // Đảm bảo header đủ cao
+    backgroundColor: Colors.white,
+    zIndex: 999,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 60,
+    elevation: 8,
   },
-  headerIcon: { width: scale(40), height: scale(40), justifyContent: 'center', alignItems: 'center' },
+  headerIcon: {
+    width: scale(48), // Tăng kích thước để chứa icon lớn hơn
+    height: scale(48),
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: scale(30),
+  },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
-    fontSize: scale(18),
+    fontSize: scale(22), // Tăng fontSize để header lớn hơn
     color: Colors.black,
     fontFamily: Fonts.fontFamily?.LexendSemiBold,
     fontWeight: 'bold',
+    paddingTop: scale(25),
   },
-  headerRight: { width: scale(70), alignItems: 'flex-end' },
+  headerRight: {
+    width: scale(80), // Tăng width để chứa chữ lớn hơn
+    alignItems: 'flex-end',
+    paddingTop: scale(24),
+  },
   headerAction: {
-    fontSize: scale(16),
+    fontSize: scale(18), // Tăng fontSize để đồng bộ
     color: Colors.blue,
     fontFamily: Fonts.fontFamily?.LexendSemiBold,
   },
 
   // Wallet card
   walletCard: {
-    margin: scale(16),
+    marginHorizontal: scale(16),
+    marginTop: scale(80), // Tăng để tránh chồng lấn với header lớn hơn
     padding: scale(28),
     backgroundColor: Colors.blue,
     borderRadius: scale(18),
@@ -385,7 +419,11 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontFamily: Fonts.fontFamily?.LexendRegular,
   },
-  balanceRow: { flexDirection: 'row', alignItems: 'flex-end', marginTop: scale(6) },
+  balanceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginTop: scale(6)
+  },
   labelAmount: {
     fontSize: scale(27),
     color: Colors.white,
@@ -445,12 +483,17 @@ const styles = StyleSheet.create({
   rowItemLast: {
     borderBottomWidth: 0,
   },
-  rowLeft: { flex: 1, paddingRight: scale(12) },
+  rowLeft: {
+    flex: 1,
+    paddingRight: scale(12)
+  },
   rowLeftHeader: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  rowRight: { alignItems: 'flex-end' },
+  rowRight: {
+    alignItems: 'flex-end'
+  },
   titleItem: {
     fontSize: scale(14),
     color: Colors.black,
@@ -467,8 +510,12 @@ const styles = StyleSheet.create({
     marginBottom: scale(4),
     fontFamily: Fonts.fontFamily?.LexendSemiBold,
   },
-  amountPos: { color: 'green' },
-  amountNeg: { color: 'red' },
+  amountPos: {
+    color: 'green'
+  },
+  amountNeg: {
+    color: 'red'
+  },
   statusItem: {
     fontSize: scale(12),
     fontFamily: Fonts.fontFamily?.LexendRegular,
@@ -476,9 +523,21 @@ const styles = StyleSheet.create({
   },
 
   // Empty & errors
-  wrapperEmpty: { alignItems: 'center', justifyContent: 'center', paddingVertical: scale(40) },
-  emptyLabel: { fontSize: scale(14), color: Colors.gray, marginTop: scale(10), textAlign: 'center' },
-  errorText: { color: Colors.red, textAlign: 'center', marginVertical: scale(10) },
+  wrapperEmpty: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: scale(40)
+  },
+  emptyLabel: {
+    fontSize: scale(14),
+    color: Colors.gray,
+    marginTop: scale(10),
+    textAlign: 'center'
+  },
+  errorText: {
+    color: Colors.red,
+    textAlign: 'center',
+    marginVertical: scale(10)
+  },
 });
-
 export default Wallet;

@@ -27,6 +27,7 @@ import { formatCustomDatetimeV2 } from '../../ultils/validation';
 import Animated from 'react-native-reanimated';
 import { Swipeable } from 'react-native-gesture-handler';
 import SuccessModal from '../../components/SuccessModal';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const Stack = createNativeStackNavigator<RootNavigatorParamList>();
 
@@ -71,7 +72,7 @@ const Notification = () => {
                 createdAt: n.createdAt,
                 isRead: n.isRead,
             }));
-            
+
             if (isRefresh || pageNumber === 1) {
                 // reset danh sách
                 setNewNotifications(mapped.filter(item => !item.isRead));
@@ -207,75 +208,77 @@ const Notification = () => {
     );
 
     return (
-        <View style={[styles.container, { paddingTop: top }]}>
-            <StatusBar barStyle="dark-content" />
-            <Header title="Thông báo" />
-            {isEmpty && !refreshing && !loadingMore ? (
-                <EmptyListComponent />
-            ) : (
-                <FlatList
-                    data={allNotifications}
-                    keyExtractor={(item, index) => item.title + index}
-                    renderItem={({ item }) => {
-                        if (item.data.length === 0) return null;
-                        return (
-                            <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>{item.title}</Text>
-                                {item.data.map(notification => (
-                                    <NotificationRow key={notification.id} item={notification} />
-                                ))}
-                            </View>
-                        );
-                    }}
-                    contentContainerStyle={styles.listContainer}
-                    refreshing={refreshing}
-                    onRefresh={handleRefresh}
-                    onEndReached={handleLoadMore}
-                    onEndReachedThreshold={0.2}
-                    ListFooterComponent={
-                        loadingMore ? (
-                            <Text style={{ textAlign: 'center', padding: 10 }}>Đang tải thêm...</Text>
-                        ) : null
-                    }
-                />
-            )}
+        <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+            <View style={[styles.container]}>
+                
+                <Header title="Thông báo" />
+                {isEmpty && !refreshing && !loadingMore ? (
+                    <EmptyListComponent />
+                ) : (
+                    <FlatList
+                        data={allNotifications}
+                        keyExtractor={(item, index) => item.title + index}
+                        renderItem={({ item }) => {
+                            if (item.data.length === 0) return null;
+                            return (
+                                <View style={styles.section}>
+                                    <Text style={styles.sectionTitle}>{item.title}</Text>
+                                    {item.data.map(notification => (
+                                        <NotificationRow key={notification.id} item={notification} />
+                                    ))}
+                                </View>
+                            );
+                        }}
+                        contentContainerStyle={styles.listContainer}
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
+                        onEndReached={handleLoadMore}
+                        onEndReachedThreshold={0.2}
+                        ListFooterComponent={
+                            loadingMore ? (
+                                <Text style={{ textAlign: 'center', padding: 10 }}>Đang tải thêm...</Text>
+                            ) : null
+                        }
+                    />
+                )}
 
-            {/* Modal xác nhận xoá */}
-            <Modal
-                transparent
-                visible={showConfirm}
-                animationType="fade"
-                onRequestClose={() => setShowConfirm(false)}
-            >
-                <View style={styles.modalBackdrop}>
-                    <View style={styles.modalContainer}>
-                        <Text style={styles.modalTitle}>Xóa thông báo này?</Text>
-                        <View style={styles.modalActions}>
-                            <Pressable
-                                style={[styles.modalBtn, { backgroundColor: '#ccc' }]}
-                                onPress={() => setShowConfirm(false)}
-                            >
-                                <Text>Hủy</Text>
-                            </Pressable>
-                            <Pressable
-                                style={[styles.modalBtn, { backgroundColor: '#C82023' }]}
-                                onPress={handleDelete}
-                            >
-                                <Text style={{ color: '#fff' }}>Xóa</Text>
-                            </Pressable>
+                {/* Modal xác nhận xoá */}
+                <Modal
+                    transparent
+                    visible={showConfirm}
+                    animationType="fade"
+                    onRequestClose={() => setShowConfirm(false)}
+                >
+                    <View style={styles.modalBackdrop}>
+                        <View style={styles.modalContainer}>
+                            <Text style={styles.modalTitle}>Xóa thông báo này?</Text>
+                            <View style={styles.modalActions}>
+                                <Pressable
+                                    style={[styles.modalBtn, { backgroundColor: '#ccc' }]}
+                                    onPress={() => setShowConfirm(false)}
+                                >
+                                    <Text>Hủy</Text>
+                                </Pressable>
+                                <Pressable
+                                    style={[styles.modalBtn, { backgroundColor: '#C82023' }]}
+                                    onPress={handleDelete}
+                                >
+                                    <Text style={{ color: '#fff' }}>Xóa</Text>
+                                </Pressable>
+                            </View>
                         </View>
                     </View>
-                </View>
-            </Modal>
-            <SuccessModal
-                visible={showSuccess}
-                title="Xoá thông báo thành công"
-                autoCloseMs={2000}
-                onClose={() => setShowSuccess(false)}
-                primaryText="OK"
-                onPrimaryPress={() => setShowSuccess(false)}
-            />
-        </View>
+                </Modal>
+                <SuccessModal
+                    visible={showSuccess}
+                    title="Xoá thông báo thành công"
+                    autoCloseMs={2000}
+                    onClose={() => setShowSuccess(false)}
+                    primaryText="OK"
+                    onPrimaryPress={() => setShowSuccess(false)}
+                />
+            </View>
+        </SafeAreaView>
     );
 };
 

@@ -92,10 +92,10 @@ const OrderDetail = ({ route }: Props) => {
         break;
       }
       case 'RETURN_FIND_DRIVER':
-        setMessageStatus('Đánh giá từ khách hàng ->');
+        setMessageStatus('Đánh giá từ khách hàng');
         break;
       case 'COMPLETED':
-        setMessageStatus('Xem đánh giá ->');
+        setMessageStatus('Xem đánh giá');
         break;
       default:
         // giữ nguyên, không set rỗng

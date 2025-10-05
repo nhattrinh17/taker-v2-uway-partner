@@ -6,12 +6,12 @@ import { Icons } from '../../assets';
 import { useNavigation } from '@react-navigation/native';
 import { useDepositWallet, useUpBill } from '../../services/wallet';
 import { Transaction } from '../../services/wallet/typings';
-import { useUserStore } from '../../states/user';
+import { useServicePackagesStore } from '../../states/servicePackages/servicePackagesStore';
 import QRCodePayment from '../../components/QRCodePayment';
 import SuccessModal from '../../components/SuccessModal';
 import InfoModal from '../../components/modals/InfoModal';
-import { useServicePackagesStore } from '../../states/servicePackages/servicePackagesStore';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 const presetAmounts = [100000, 200000, 300000, 500000, 1000000, 2000000];
 
 const Deposit = () => {
@@ -22,30 +22,60 @@ const Deposit = () => {
   const [amount, setAmount] = useState(0);
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
   const { evidenceImage, setEvidenceImage } = useServicePackagesStore();
   const { triggerDepositWallet } = useDepositWallet();
   const { triggerUpBill } = useUpBill();
   const [isSuccessModalVisible, setSuccessModalVisible] = useState(false);
   const [isInfoModalVisible, setInfoModalVisible] = useState(false);
   const [infoModalConfig, setInfoModalConfig] = useState({ title: '', message: '' });
-  const transactionFee = 0; // Phí này nên được lấy từ API
+  const transactionFee = 0;
   const totalAmount = amount + transactionFee;
 
-  // Log để debug evidenceImage
   useEffect(() => {
     console.log('evidenceImage:', evidenceImage);
   }, [evidenceImage]);
 
-  // Reset evidenceImage khi vào màn hình
   useEffect(() => {
     setEvidenceImage('');
+    setIsExpired(false);
   }, []);
+
+  const handleTimeout = () => {
+    setIsExpired(true);
+    setInfoModalConfig({
+      title: 'Giao dịch hết hạn',
+      message: 'Thời gian thực hiện giao dịch đã hết. Vui lòng thử lại.',
+    });
+    setInfoModalVisible(true);
+  };
+
+  useEffect(() => {
+    if (isExpired && isInfoModalVisible) {
+      const timer = setTimeout(() => {
+        setInfoModalVisible(false);
+        setEvidenceImage('');
+        setStep('amount'); // Quay lại bước nhập số tiền
+        setTransaction(null); // Xóa giao dịch
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isExpired, isInfoModalVisible, setEvidenceImage]);
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString('vi-VN');
   };
 
   const handleContinue = async () => {
+    if (isExpired) {
+      setInfoModalConfig({
+        title: 'Giao dịch hết hạn',
+        message: 'Giao dịch đã hết hạn. Vui lòng thử lại.',
+      });
+      setInfoModalVisible(true);
+      return;
+    }
+
     if (step === 'amount') {
       if (amount < 5000 || amount > 10000000) {
         setInfoModalConfig({
@@ -61,21 +91,19 @@ const Deposit = () => {
     try {
       if (step === 'amount') {
         const res = await triggerDepositWallet({ amount });
-        console.log('reponse api: ',res);
+        console.log('reponse api: ', res);
         if (res && res.data) {
           setTransaction(res.data);
-          console.log('==>', transaction)
           setStep('qr');
         }
       } else if (step === 'qr' && transaction) {
         console.log('evidence:', evidenceImage);
-        if (!evidenceImage ) {
+        if (!evidenceImage) {
           setInfoModalConfig({
             title: 'Thông báo',
             message: 'Vui lòng tải lên hóa đơn thanh toán.',
           });
           setInfoModalVisible(true);
-          setIsLoading(false); 
           return;
         }
         await triggerUpBill({
@@ -103,9 +131,10 @@ const Deposit = () => {
         <>
           <Text style={styles.inputLabel}>Nhập số tiền (VNĐ)</Text>
           <TextInput
-            style={styles.amountInput}
+            style={[styles.amountInput, isExpired && styles.disabledInput]}
             value={formatCurrency(amount)}
             onChangeText={(text) => {
+              if (isExpired) return;
               const numeric = text.replace(/\D/g, '');
               setAmount(numeric === '' ? 0 : parseInt(numeric, 10));
             }}
@@ -117,8 +146,11 @@ const Deposit = () => {
               {presetAmounts.map((preset) => (
                 <TouchableOpacity
                   key={preset}
-                  style={[styles.presetButton, amount === preset && styles.presetButtonSelected]}
-                  onPress={() => setAmount(preset)}
+                  style={[styles.presetButton, amount === preset && styles.presetButtonSelected, isExpired && styles.presetButtonDisabled]}
+                  onPress={() => {
+                    if (!isExpired) setAmount(preset);
+                  }}
+                  disabled={isExpired}
                 >
                   <Text style={[styles.presetButtonText, amount === preset && styles.presetButtonTextSelected]}>
                     {formatCurrency(preset)}
@@ -137,63 +169,67 @@ const Deposit = () => {
     }
 
     if (step === 'qr' && transaction) {
-      return (
-        <QRCodePayment transaction={transaction} />
-      );
+      return <QRCodePayment transaction={transaction} duration={600} onTimeout={handleTimeout} />;
     }
     return null;
   };
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
-    <View style={[styles.container, { paddingTop: top }]}>
-      <StatusBar barStyle="dark-content" />
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => (step === 'qr' ? setStep('amount') : navigation.goBack())}>
-          <Icons.Backbutton width={27} height={27} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Nạp tiền</Text>
-        <View style={{ width: 24 }} />
+      <View style={[styles.container, { paddingTop: top }]}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => (step === 'qr' ? setStep('amount') : navigation.goBack())}>
+            <Icons.Backbutton width={27} height={27} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Nạp tiền</Text>
+          <View style={{ width: 24 }} />
+        </View>
+
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          {renderContent()}
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={[styles.continueButton, (isLoading || (step === 'qr' && !evidenceImage) || isExpired) && styles.continueButtonDisabled]}
+            onPress={handleContinue}
+            disabled={isLoading || (step === 'qr' && !evidenceImage) || isExpired}
+          >
+            {isLoading ? <ActivityIndicator color="white" /> : <Text style={styles.continueButtonText}>Tiếp tục</Text>}
+          </TouchableOpacity>
+        </View>
+
+        <SuccessModal
+          visible={isSuccessModalVisible}
+          onClose={() => {
+            setSuccessModalVisible(false);
+            navigation.goBack();
+          }}
+          title="Giao dịch thành công"
+          message="Giao dịch của bạn đã được ghi nhận. Vui lòng đợi xác nhận từ Uway trong thời gian sớm nhất."
+          icon={<Icons.Success width={60} height={60} />}
+          autoCloseMs={2000}
+        />
+
+        <InfoModal
+          visible={isInfoModalVisible}
+          onClose={() => setInfoModalVisible(false)}
+          title={infoModalConfig.title}
+          message={infoModalConfig.message}
+          primaryText="Đã hiểu"
+        />
       </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {renderContent()}
-      </ScrollView>
-
-      <View style={styles.footer}>
-        <TouchableOpacity 
-          style={[styles.continueButton, (isLoading || (step === 'qr' && !evidenceImage)) && styles.continueButtonDisabled]} 
-          onPress={handleContinue}
-          // disabled={isLoading || (step === 'qr' && !evidenceImage)}
-        >
-          {isLoading ? <ActivityIndicator color="white" /> : <Text style={styles.continueButtonText}>Tiếp tục</Text>}
-        </TouchableOpacity>
-      </View>
-      <SuccessModal
-        visible={isSuccessModalVisible}
-        onClose={() => {
-          setSuccessModalVisible(false);
-          navigation.goBack();
-        }}
-        title="Giao dịch thành công"
-        message="Giao dịch của bạn đã được ghi nhận. Vui lòng đợi xác nhận từ Uway trong thời gian sớm nhất."
-        icon={<Icons.Success width={60} height={60} />}
-        autoCloseMs={2000}
-      />
-
-      <InfoModal
-        visible={isInfoModalVisible}
-        onClose={() => setInfoModalVisible(false)}
-        title={infoModalConfig.title}
-        message={infoModalConfig.message}
-        primaryText="Đã hiểu"
-      />
-    </View>
     </SafeAreaView>
   );
 };
 
-interface SummaryRowProps { label: string; value: string; isTotal?: boolean; isLast?: boolean; }
+interface SummaryRowProps {
+  label: string;
+  value: string;
+  isTotal?: boolean;
+  isLast?: boolean;
+}
 const SummaryRow: React.FC<SummaryRowProps> = ({ label, value, isTotal = false, isLast = false }) => (
   <View style={[styles.summaryRow, isLast && { borderBottomWidth: 0 }]}>
     <Text style={isTotal ? styles.summaryLabelTotal : styles.summaryLabel}>{label}</Text>
@@ -227,10 +263,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
   },
-  presetGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+  disabledInput: {
+    opacity: 0.6,
   },
   presetCard: {
     backgroundColor: 'white',
@@ -241,6 +275,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+  },
+  presetGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   presetButton: {
     width: '32%',
@@ -255,6 +294,9 @@ const styles = StyleSheet.create({
   presetButtonSelected: {
     borderColor: Colors.blue,
     backgroundColor: '#E6F3FF',
+  },
+  presetButtonDisabled: {
+    opacity: 0.6,
   },
   presetButtonText: {
     fontSize: 14,

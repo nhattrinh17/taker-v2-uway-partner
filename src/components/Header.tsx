@@ -17,7 +17,7 @@ const style = StyleSheet.create({
     color: Colors.black,
     lineHeight: 24,
     fontWeight: '700',
-    marginTop: 18,
+    marginTop: 24,
     flex: 1,
     textAlign: 'center'
   },
